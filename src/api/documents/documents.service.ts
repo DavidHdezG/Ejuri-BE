@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -32,7 +32,7 @@ export class DocumentsService {
   public async update(id: string, updateDocumentDto: UpdateDocumentDto) {
     const document = await this.findOne(id);
     if (!document) {
-      return Error('Document not found');
+      return new NotFoundException('Document not found');
     }
 
     Object.assign(document, updateDocumentDto);
@@ -40,6 +40,10 @@ export class DocumentsService {
   }
 
   public async remove(id: string): Promise<DeleteResult> {
+    const document = await this.findOne(id);
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
     return await this.repository.delete(id);
   }
 }

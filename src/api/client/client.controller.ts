@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, NotFoundException, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { ClientService } from './client.service';
 import { Client } from './entities/client.entity';
 import { CreateClientDto } from './dto/create-client.dto';
@@ -9,22 +9,26 @@ export class ClientController {
     private readonly service: ClientService;
 
     @Get(':id')
-    public getClient(@Param('id', ParseIntPipe)id: number): Promise<Client>{
-        return this.service.findOne(id);
+    public async findOne(@Param('id', ParseIntPipe)id: number): Promise<Client>{
+        const client= await this.service.findOne(id);
+        if(!client){
+            throw new NotFoundException('Client not found');
+        }
+        return client;
     }
     
     @Post()
-    public createClient(@Body() body: CreateClientDto): Promise<Client>{
+    public create(@Body() body: CreateClientDto): Promise<Client>{
         return this.service.create(body);
     }
         
     @Get()
-    public getClients(): Promise<Client[]>{
+    public findAll(): Promise<Client[]>{
         return this.service.findAll();
     }
 
     @Delete(':id')
-    public deleteClient(@Param('id', ParseIntPipe)id: number): Promise<Client>{
+    public delete(@Param('id', ParseIntPipe)id: number): Promise<Client>{
         return this.service.delete(id);
     }
 }

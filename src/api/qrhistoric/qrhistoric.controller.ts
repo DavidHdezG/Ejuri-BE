@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException } from '@nestjs/common';
 import { QrhistoricService } from './qrhistoric.service';
 import { CreateQrhistoricDto } from './dto/create-qrhistoric.dto';
 import { UpdateQrhistoricDto } from './dto/update-qrhistoric.dto';
@@ -18,8 +18,12 @@ export class QrhistoricController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.qrhistoricService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    const qrhistoric=await this.qrhistoricService.findOne(+id);
+    if(!qrhistoric){
+      throw new NotFoundException('Qrhistoric not found');
+    }
+    return qrhistoric;
   }
 
   @Patch(':id')

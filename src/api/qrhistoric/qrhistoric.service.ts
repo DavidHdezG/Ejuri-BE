@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateQrhistoricDto } from './dto/create-qrhistoric.dto';
 import { UpdateQrhistoricDto } from './dto/update-qrhistoric.dto';
 import { Repository } from 'typeorm';
@@ -32,7 +32,7 @@ export class QrhistoricService {
   public async update(id: number, updateQrhistoricDto: UpdateQrhistoricDto) {
     const qrhistoric = await this.findOne(id);
     if (!qrhistoric) {
-      return Error('Qrhistoric not found');
+      return new NotFoundException('Qrhistoric not found');
     }
 
     Object.assign(qrhistoric, updateQrhistoricDto);
@@ -40,6 +40,11 @@ export class QrhistoricService {
   }
 
   public async remove(id: number): Promise<any> {
+    const qrhistoric = await this.findOne(id);
+    if (!qrhistoric) {
+      throw new NotFoundException('Qrhistoric not found');
+    }
+
     return await this.repository.delete(id);
   }
 }
