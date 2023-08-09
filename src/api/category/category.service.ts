@@ -11,22 +11,27 @@ export class CategoryService {
   private readonly repository: Repository<Category>;
 
   create(createCategoryDto: CreateCategoryDto): Promise<Category> {
-    const category: Category = new Category();
-    category.name = createCategoryDto.name;
+    const category: Category = this.repository.create(createCategoryDto);
 
     return this.repository.save(category);
   }
 
-  findAll(): Promise<Category[]> {
-    return this.repository.find();
+  async findAll(): Promise<Category[]> {
+    return await this.repository.find();
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     return this.repository.findOneBy({id: id});
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
+    const category = await this.findOne(id);
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    Object.assign(category, updateCategoryDto);
+    return this.repository.save(category);
   }
 
   async remove(id: number): Promise<DeleteResult> {

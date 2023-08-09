@@ -8,28 +8,38 @@ import { InjectRepository } from '@nestjs/typeorm';
 @Injectable()
 export class QrhistoricService {
   @InjectRepository(Qrhistoric)
-  private readonly qrhistoric: Repository<Qrhistoric>;
+  private readonly repository: Repository<Qrhistoric>;
 
+  public async create(
+    createQrhistoricDto: CreateQrhistoricDto,
+  ): Promise<Qrhistoric> {
+    const qrhistoric: Qrhistoric = this.repository.create(createQrhistoricDto);
 
-  public async create(createQrhistoricDto: CreateQrhistoricDto): Promise<Qrhistoric> {
-    const qrhistoric: Qrhistoric = new Qrhistoric();
-    qrhistoric.client = createQrhistoricDto.client;
-    qrhistoric.folio = createQrhistoricDto.folio;
-    qrhistoric.comments = createQrhistoricDto.comments;
-    qrhistoric.document = createQrhistoricDto.document;
-    qrhistoric.qr = createQrhistoricDto.qr;
-    qrhistoric.user = createQrhistoricDto.user;
-    qrhistoric.category = createQrhistoricDto.category;
-
-    return await this.qrhistoric.save(qrhistoric);
+    return await this.repository.save(qrhistoric);
   }
 
-  public async findAll() : Promise<Qrhistoric[]>{
-    return await this.qrhistoric.find({relations: ["client", "document","category","user"], order: {id: "DESC"}});
+  public async findAll(): Promise<Qrhistoric[]> {
+    return await this.repository.find({
+      relations: ['client', 'document', 'category', 'user'],
+      order: { id: 'DESC' },
+    });
   }
 
   public async findOne(id: number) {
-    return await this.qrhistoric.findOne({where: {id: id}});
+    return await this.repository.findOne({ where: { id: id } });
   }
 
+  public async update(id: number, updateQrhistoricDto: UpdateQrhistoricDto) {
+    const qrhistoric = await this.findOne(id);
+    if (!qrhistoric) {
+      return Error('Qrhistoric not found');
+    }
+
+    Object.assign(qrhistoric, updateQrhistoricDto);
+    return await this.repository.save(qrhistoric);
+  }
+
+  public async remove(id: number): Promise<any> {
+    return await this.repository.delete(id);
+  }
 }

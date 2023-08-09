@@ -6,28 +6,32 @@ import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>;
+  @InjectRepository(User)
+  private readonly repository: Repository<User>;
 
-    public async create(userdto: CreateUserDto): Promise<User> {
-        const user = new User();
-        user.name = userdto.name;
-        user.email = userdto.email;
-        user.password = userdto.password;
-        return await this.userRepository.save(user);
-    }
+  public async create(userdto: CreateUserDto): Promise<User> {
+    const user = this.repository.create(userdto);
+    return await this.repository.save(user);
+  }
 
-    public async findOne(email: string): Promise<User> {
+  public async findOne(email: string): Promise<User> {
+    return await this.repository.findOne({ where: { email: email } });
+  }
 
-        //const user = await this.userRepository.findOne({ where: { email } });
-        return await this.userRepository.findOne({ where: { email: email } });
-        
-    }
+  public async findOneById(id: number): Promise<User> {
+    return await this.repository.findOne({ where: { id: id } });
+  }
 
-    public async findOneById(id: number): Promise<User> {
-        return await this.userRepository.findOne({ where: { id: id } });
+  public async findAll(): Promise<User[]> {
+    return await this.repository.find();
+  }
+
+  public async update(id: number, userdto: CreateUserDto): Promise<User> {
+    const user = await this.findOneById(id);
+    if (!user) {
+      throw new Error('User not found');
     }
-    public async findAll(): Promise<User[]> {
-        return await this.userRepository.find();
-    }
+    Object.assign(user, userdto);
+    return await this.repository.save(user);
+  }
 }

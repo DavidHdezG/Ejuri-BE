@@ -1,5 +1,5 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Qrhistoric } from "../qrhistoric/entities/qrhistoric.entity";
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Qrhistoric } from "../../qrhistoric/entities/qrhistoric.entity";
 
 @Entity()
 export class Client{

@@ -1,22 +1,24 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 export class CreateQrhistoricDto {
-    
+    @IsNumber()
     @IsNotEmpty()
-    client;
+    client:string;
     @IsString()
     @IsNotEmpty()
-    folio;
+    folio:string;
     @IsString()
-    comments; 
-    @IsString()
-    @IsNotEmpty()
-    document; 
-    @IsNotEmpty()
-    category
+    comments:string; 
     @IsString()
     @IsNotEmpty()
-    qr;
+    document:string; 
+    @IsString()
     @IsNotEmpty()
-    user;
+    category:string;
+    @IsString()
+    @IsNotEmpty()
+    qr:string;
+    @IsString()
+    @IsNotEmpty()
+    user:string;
 }

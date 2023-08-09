@@ -32,10 +32,4 @@ export class DocumentsController {
     return this.documentsService.remove(id);
   }
 
-  @Get('type/:typeDoc')
-  findAllPyme(@Param('typeDoc') type: number){
-    return this.documentsService.findAllByType(type.toString());
-
-    
-  }
 }

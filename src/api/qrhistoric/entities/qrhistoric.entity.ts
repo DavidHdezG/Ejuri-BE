@@ -1,4 +1,4 @@
-import { Client } from "src/api/client/client.entity";
+import { Client } from "src/api/client/entities/client.entity";
 import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Document } from "src/api/documents/entities/document.entity";
 import { Category } from "src/api/category/entities/category.entity";
@@ -9,7 +9,7 @@ export class Qrhistoric {
     public id: number;
 
     @ManyToOne(() => Client, client => client.qrhistoric)
-    client: Client;
+    client: string;
 
     @Column()
     folio: string;
