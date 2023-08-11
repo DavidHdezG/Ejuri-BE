@@ -1,1 +1,13 @@
 GET http://localhost:3001/documents
+
+
+
+###
+POST http://localhost:3001/users/signup
+Content-Type: application/json
+
+{
+    "name": "Test2",
+    "email": "test@blucapital.mx",
+    "password": "123"
+}

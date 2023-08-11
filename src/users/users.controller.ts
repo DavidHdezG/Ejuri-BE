@@ -2,11 +2,15 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
+  Param,
   Post,
   Req,
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
+import { UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
+import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,14 +23,37 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly authService: AuthService,
   ) {}
 
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('signup')
+  createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
+    return this.authService.signup(createUserDto);
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('signin')
+  signin(@Body('email') email: string, @Body('password') password: string) {
+    return this.authService.signin(email, password);
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get()
   async findAll(): Promise<User[]> {
     return await this.usersService.findAll();
   }
 
-  @Post('register')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get(':id')
+  async findOneById(@Param('id') id: string): Promise<User> {
+    const user = await this.usersService.findOneById(parseInt(id));
+    if (!user) {
+      throw new NotFoundException();
+    }
+    return user;
+  }
+  /*   @Post('register')
   async register(@Body() createUserDto: CreateUserDto): Promise<User> {
     const hashedPassword = await bcrypt.hash(
       createUserDto.password.toString(),
@@ -34,7 +61,6 @@ export class UsersController {
     );
     createUserDto.password = hashedPassword;
     const user = await this.usersService.create(createUserDto);
-    delete user.password;
     return user;
   }
 
@@ -78,5 +104,5 @@ export class UsersController {
   async logout(@Res({ passthrough: true }) response: Response) {
     response.clearCookie('jwt');
     return { message: 'Success' };
-  }
+  } */
 }

@@ -1,6 +1,6 @@
+import { Exclude } from "class-transformer";
 import { Qrhistoric } from "src/api/qrhistoric/entities/qrhistoric.entity";
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-
 @Entity()
 export class User{
     @PrimaryGeneratedColumn()
@@ -11,6 +11,7 @@ export class User{
     @Column({ type: "varchar", length: 100, nullable: false, unique: true })
     email: string;
     @Column({ type: "varchar", length: 100, nullable: false })
+    @Exclude()
     password: string;
     @Column({ type: 'boolean', default: false })
     isDeleted: boolean;
