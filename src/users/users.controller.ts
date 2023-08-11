@@ -8,6 +8,7 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  Session
 } from '@nestjs/common';
 import { UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
 import { AuthService } from './auth.service';
