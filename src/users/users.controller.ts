@@ -5,10 +5,12 @@ import {
   NotFoundException,
   Param,
   Post,
-
   UnauthorizedException,
-  Session
+  Session,
+  UseGuards,
+
 } from '@nestjs/common';
+import { CurrentUserInterceptor } from './interceptors/current-user.interceptor';
 import { UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
@@ -16,9 +18,12 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
-
+import { AuthGuard } from './guards/auth.guard';
 import { Response, Request } from 'express';
+import { CurrentUser } from './decorators/current-user.decorator';
 @Controller('users')
+@UseInterceptors(CurrentUserInterceptor)
+
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
@@ -47,7 +52,7 @@ export class UsersController {
     session.userId = null;
   }
 
-  @UseInterceptors(ClassSerializerInterceptor)
+/*   @UseInterceptors(ClassSerializerInterceptor)
   @Get('user')
   async user(@Session() session: any) {
     if (!session.userId) {
@@ -55,6 +60,11 @@ export class UsersController {
     }
     console.log(session.userId);
     const user = await this.usersService.findOneById(session.userId);
+    return user;
+  } */
+  @UseGuards(AuthGuard)
+  @Get('user')
+  user(@CurrentUser() user:User){
     return user;
   }
 
