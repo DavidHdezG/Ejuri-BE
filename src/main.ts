@@ -12,7 +12,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true}));
 /*   app.use(cookieParser()); */
   app.use(cookieSession({
-    keys: ['XO3ecpunUS']
+    keys: [process.env.COOKIE_KEY+'']
   }))
   app.enableCors(
     {

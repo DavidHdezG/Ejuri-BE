@@ -28,14 +28,34 @@ export class UsersController {
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('signup')
-  createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return this.authService.signup(createUserDto);
+  async createUser(@Body() createUserDto: CreateUserDto, @Session() session: any): Promise<User> {
+    const user= await this.authService.signup(createUserDto);
+    session.userId = user.id;
+    return user;
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('signin')
-  signin(@Body('email') email: string, @Body('password') password: string) {
-    return this.authService.signin(email, password);
+  async signIn(@Body('email') email: string, @Body('password') password: string , @Session() session: any) {
+    const user = await this.authService.signin(email, password);
+    session.userId = user.id;
+    return user;
+  }
+
+  @Post('signout')
+  signOut(@Session() session: any) {
+    session.userId = null;
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('user')
+  async user(@Session() session: any) {
+    if (!session.userId) {
+      throw new UnauthorizedException();
+    }
+    console.log(session.userId);
+    const user = await this.usersService.findOneById(session.userId);
+    return user;
   }
 
   @UseInterceptors(ClassSerializerInterceptor)

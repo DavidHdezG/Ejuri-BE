@@ -7,7 +7,23 @@ POST http://localhost:3001/users/signup
 Content-Type: application/json
 
 {
+    "name": "Test3",
+    "email": "test3@blucapital.mx",
+    "password": "123"
+}
+###
+POST http://localhost:3001/users/signin
+Content-Type: application/json
+
+{
     "name": "Test2",
     "email": "test@blucapital.mx",
     "password": "123"
 }
+
+###
+GET http://localhost:3001/users/user
+
+###
+
+POST http://localhost:3001/users/signout
