@@ -10,7 +10,7 @@ import {
   UseGuards,
 
 } from '@nestjs/common';
-import { CurrentUserInterceptor } from './interceptors/current-user.interceptor';
+
 import { UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
@@ -21,9 +21,10 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from './guards/auth.guard';
 import { Response, Request } from 'express';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { Roles } from './decorators/roles.decorator';
+import { Role } from './interfaces/role.interface';
+import { RolesGuard } from './guards/roles.guard';
 @Controller('users')
-@UseInterceptors(CurrentUserInterceptor)
-
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
@@ -52,30 +53,23 @@ export class UsersController {
     session.userId = null;
   }
 
-/*   @UseInterceptors(ClassSerializerInterceptor)
-  @Get('user')
-  async user(@Session() session: any) {
-    if (!session.userId) {
-      throw new UnauthorizedException();
-    }
-    console.log(session.userId);
-    const user = await this.usersService.findOneById(session.userId);
-    return user;
-  } */
   @UseGuards(AuthGuard)
   @Get('user')
   user(@CurrentUser() user:User){
     return user;
   }
 
+  @UseGuards(AuthGuard,RolesGuard)
   @UseInterceptors(ClassSerializerInterceptor)
+  @Roles(Role.ADMIN)
   @Get()
   async findAll(): Promise<User[]> {
     return await this.usersService.findAll();
   }
-
+  @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':id')
+  @Roles(Role.ADMIN)
   async findOneById(@Param('id') id: string): Promise<User> {
     const user = await this.usersService.findOneById(parseInt(id));
     if (!user) {
@@ -83,56 +77,4 @@ export class UsersController {
     }
     return user;
   }
-  /*   @Post('register')
-  async register(@Body() createUserDto: CreateUserDto): Promise<User> {
-    const hashedPassword = await bcrypt.hash(
-      createUserDto.password.toString(),
-      12,
-    );
-    createUserDto.password = hashedPassword;
-    const user = await this.usersService.create(createUserDto);
-    return user;
-  }
-
-  @Post('login')
-  async login(
-    @Body('email') email: string,
-    @Body('password') password: string,
-    @Res({ passthrough: true }) response: Response,
-  ): Promise<any> {
-    const user = await this.usersService.findOne(email);
-    if (!user) {
-      return { message: 'User not found' };
-    }
-    
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return { message: 'Wrong password' };
-    }
-
-    const jwt = await this.jwtService.signAsync({ id: user.id });
-    response.cookie('jwt', jwt, { httpOnly: false });
-    return { message: 'Success' };
-  }
-  @Get('user')
-  async user(@Req() request: Request) {
-    try {
-      const cookie = request.cookies['jwt'];
-      const data = await this.jwtService.verifyAsync(cookie);
-      if (!data) {
-        throw new UnauthorizedException();
-      }
-      const user = await this.usersService.findOneById(data['id']);
-      const { password, ...result } = user;
-      return result;
-    } catch (e) {
-      console.log(e.message);
-      throw new UnauthorizedException();
-    }
-  }
-  @Post('logout')
-  async logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('jwt');
-    return { message: 'Success' };
-  } */
 }

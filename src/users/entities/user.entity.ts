@@ -1,6 +1,7 @@
 import { Exclude } from "class-transformer";
 import { Qrhistoric } from "src/api/qrhistoric/entities/qrhistoric.entity";
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Role } from "../interfaces/role.interface";
 @Entity()
 export class User{
     @PrimaryGeneratedColumn()
@@ -14,11 +15,16 @@ export class User{
     @Exclude()
     password: string;
     @Column({ type: 'boolean', default: false })
+    @Exclude()
     isDeleted: boolean;
     @CreateDateColumn({ type: 'timestamp' })
+    @Exclude()
     createdAt: Date;
     @UpdateDateColumn({ type: 'timestamp' })
+    @Exclude()
     updatedAt: Date;
+    @Column({ type: 'enum', enum: Role, default: Role.JURIDICO, nullable: true })
+    role: Role;
 
     @OneToMany(()=> Qrhistoric, qrhistoric => qrhistoric.id)
     qrhistoric: Qrhistoric[];

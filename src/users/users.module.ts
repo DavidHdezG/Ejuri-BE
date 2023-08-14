@@ -1,12 +1,12 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
-import { CurrentUserInterceptor } from './interceptors/current-user.interceptor';
 
+import { CurrentUserMiddleware } from './middlewares/current-user.middleware';
 @Module({
   imports: [TypeOrmModule.forFeature([User]),
             JwtModule.register({
@@ -14,6 +14,10 @@ import { CurrentUserInterceptor } from './interceptors/current-user.interceptor'
               signOptions: { expiresIn: '1d' },
             })],
   controllers: [UsersController],
-  providers: [UsersService, AuthService, CurrentUserInterceptor]
+  providers: [UsersService, AuthService]
 })
-export class UsersModule {}
+export class UsersModule {
+  configure(consumer: MiddlewareConsumer){
+    consumer.apply(CurrentUserMiddleware).forRoutes('*');
+  }
+}
