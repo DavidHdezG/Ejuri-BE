@@ -8,7 +8,6 @@ import {
   UnauthorizedException,
   Session,
   UseGuards,
-
 } from '@nestjs/common';
 
 import { UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
@@ -25,6 +24,7 @@ import { Roles } from './decorators/roles.decorator';
 import { Role } from './interfaces/role.interface';
 import { RolesGuard } from './guards/roles.guard';
 @Controller('users')
+@UseGuards(RolesGuard)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
@@ -34,32 +34,40 @@ export class UsersController {
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('signup')
-  async createUser(@Body() createUserDto: CreateUserDto, @Session() session: any): Promise<User> {
-    const user= await this.authService.signup(createUserDto);
+  async createUser(
+    @Body() createUserDto: CreateUserDto,
+    @Session() session: any,
+  ): Promise<User> {
+    const user = await this.authService.signup(createUserDto);
     session.userId = user.id;
     return user;
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('signin')
-  async signIn(@Body('email') email: string, @Body('password') password: string , @Session() session: any) {
+  async signIn(
+    @Body('email') email: string,
+    @Body('password') password: string,
+    @Session() session: any,
+  ) {
     const user = await this.authService.signin(email, password);
     session.userId = user.id;
     return user;
   }
 
   @Post('signout')
+  @UseGuards(AuthGuard)
   signOut(@Session() session: any) {
     session.userId = null;
   }
 
   @UseGuards(AuthGuard)
   @Get('user')
-  user(@CurrentUser() user:User){
+  user(@CurrentUser() user: User) {
     return user;
   }
 
-  @UseGuards(AuthGuard,RolesGuard)
+  @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Roles(Role.ADMIN)
   @Get()

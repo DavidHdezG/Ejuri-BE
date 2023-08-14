@@ -1,9 +1,14 @@
-import { Body, Controller, Delete, Get, Inject, NotFoundException, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, NotFoundException, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
 import { ClientService } from './client.service';
 import { Client } from './entities/client.entity';
 import { CreateClientDto } from './dto/create-client.dto';
+import { AuthGuard } from 'src/users/guards/auth.guard';
+import { RolesGuard } from 'src/users/guards/roles.guard';
+import { Roles } from 'src/users/decorators/roles.decorator';
+import { Role } from 'src/users/interfaces/role.interface';
 
 @Controller('client')
+@UseGuards(AuthGuard, RolesGuard)
 export class ClientController {
     @Inject(ClientService)
     private readonly service: ClientService;
@@ -28,6 +33,7 @@ export class ClientController {
     }
 
     @Delete(':id')
+    @Roles(Role.ADMIN)
     public delete(@Param('id', ParseIntPipe)id: number): Promise<Client>{
         return this.service.delete(id);
     }

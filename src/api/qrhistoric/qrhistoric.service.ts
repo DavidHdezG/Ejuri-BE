@@ -22,6 +22,7 @@ export class QrhistoricService {
     return await this.repository.find({
       relations: ['client', 'document', 'category', 'user'],
       order: { id: 'DESC' },
+      where: { isDeleted: false },
     });
   }
 
@@ -39,12 +40,12 @@ export class QrhistoricService {
     return await this.repository.save(qrhistoric);
   }
 
-  public async remove(id: number): Promise<any> {
+  public async remove(id: number): Promise<Qrhistoric> {
     const qrhistoric = await this.findOne(id);
     if (!qrhistoric) {
       throw new NotFoundException('Qrhistoric not found');
     }
-
-    return await this.repository.delete(id);
+    qrhistoric.isDeleted = true;
+    return await this.repository.save(qrhistoric);
   }
 }

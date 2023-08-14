@@ -19,6 +19,7 @@ export class DocumentsService {
     return this.repository.find({
       relations: ['category'],
       order: { id: 'ASC' },
+      where: { isDeleted: false },
     });
   }
 
@@ -39,11 +40,12 @@ export class DocumentsService {
     return await this.repository.save(document);
   }
 
-  public async remove(id: string): Promise<DeleteResult> {
+  public async remove(id: string): Promise<Document> {
     const document = await this.findOne(id);
     if (!document) {
       throw new NotFoundException('Document not found');
     }
-    return await this.repository.delete(id);
+    document.isDeleted = true;
+    return await this.repository.save(document);
   }
 }

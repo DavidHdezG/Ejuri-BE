@@ -18,4 +18,7 @@ export class Document {
     
     @ManyToOne(()=> Category, category => category.document)
     public category: string;
+
+    @Column({ type: 'boolean', default: false})
+    public isDeleted: boolean;
 }

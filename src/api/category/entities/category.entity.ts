@@ -14,4 +14,7 @@ export class Category {
 
     @OneToMany(()=> Document, document => document.id)
     public document: Document[];
+
+    @Column({ type: 'boolean', default: false})
+    public isDeleted: boolean;
 }

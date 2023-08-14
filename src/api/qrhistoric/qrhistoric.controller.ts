@@ -1,9 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException, UseGuards } from '@nestjs/common';
 import { QrhistoricService } from './qrhistoric.service';
 import { CreateQrhistoricDto } from './dto/create-qrhistoric.dto';
 import { UpdateQrhistoricDto } from './dto/update-qrhistoric.dto';
+import { AuthGuard } from 'src/users/guards/auth.guard';
+import { RolesGuard } from 'src/users/guards/roles.guard';
+import { Roles } from 'src/users/decorators/roles.decorator';
+import { Role } from 'src/users/interfaces/role.interface';
 
 @Controller('qrhistoric')
+@UseGuards(AuthGuard,RolesGuard)
 export class QrhistoricController {
   constructor(private readonly qrhistoricService: QrhistoricService) {}
 
@@ -25,12 +30,12 @@ export class QrhistoricController {
     }
     return qrhistoric;
   }
-
+  @Roles(Role.ADMIN)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateQrhistoricDto: UpdateQrhistoricDto) {
     return this.qrhistoricService.update(+id, updateQrhistoricDto);
   }
-
+  @Roles(Role.ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.qrhistoricService.remove(+id);

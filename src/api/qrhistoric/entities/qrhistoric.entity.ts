@@ -32,4 +32,6 @@ export class Qrhistoric {
     @CreateDateColumn({ type: 'timestamp' })
     public createdAt!: Date;
 
+    @Column({ type: 'boolean', default: false})
+    public isDeleted: boolean;
 }

@@ -17,7 +17,7 @@ export class CategoryService {
   }
 
   async findAll(): Promise<Category[]> {
-    return await this.repository.find();
+    return await this.repository.find({where: {isDeleted: false}});
   }
 
   async findOne(id: string) {
@@ -34,11 +34,12 @@ export class CategoryService {
     return this.repository.save(category);
   }
 
-  async remove(id: string): Promise<DeleteResult> {
+  async remove(id: string): Promise<Category> {
     const category = await this.findOne(id);
     if( !category ){
       throw new NotFoundException('Category not found');
     }
-    return this.repository.delete(id);
+    category.isDeleted = true;
+    return this.repository.save(category);
   }
 }
