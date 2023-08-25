@@ -13,12 +13,12 @@ import {
 import { UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
-import * as bcrypt from 'bcrypt';
+
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from './guards/auth.guard';
-import { Response, Request } from 'express';
+
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Roles } from './decorators/roles.decorator';
 import { Role } from './interfaces/role.interface';
@@ -84,5 +84,19 @@ export class UsersController {
       throw new NotFoundException();
     }
     return user;
+  }
+
+  @UseGuards(AuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('change-password')
+  async changePassword(
+    @CurrentUser() user: User,
+    @Body('password') password: string,
+    @Body('newPassword') newPassword: string,
+  ) {
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    return await this.authService.changePassword(user.email, password, newPassword);
   }
 }

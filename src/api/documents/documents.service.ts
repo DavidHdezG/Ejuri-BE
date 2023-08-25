@@ -45,7 +45,8 @@ export class DocumentsService {
     if (!document) {
       throw new NotFoundException('Document not found');
     }
-    document.isDeleted = true;
+    await this.repository.delete(id);
+    Object.assign(document, {id: "_"+id, isDeleted: true });
     return await this.repository.save(document);
   }
 }
