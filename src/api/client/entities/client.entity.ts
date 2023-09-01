@@ -1,23 +1,40 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Qrhistoric } from "../../qrhistoric/entities/qrhistoric.entity";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Qrhistoric } from '../../qrhistoric/entities/qrhistoric.entity';
+import { DriveDirectory } from 'src/api/drive-directory/entities/drive-directory.entity';
+import { Category } from 'src/api/category/entities/category.entity';
 
 @Entity()
-export class Client{
-    @PrimaryGeneratedColumn()
-    public id: number;
+export class Client {
+  @PrimaryColumn()
+  public id: string;
 
-    @Column({ type: "varchar", length: 100, nullable: false })
-    public name: string;
+  @Column({ type: 'varchar', length: 100, nullable: false })
+  public name: string;
 
-    @Column({ type: 'boolean', default: false })
-    public isDeleted: boolean;
+  @Column({ type: 'boolean', default: false })
+  public isDeleted: boolean;
 
-    @CreateDateColumn({ type: 'timestamp' })
-    public createdAt!: Date;
+  @CreateDateColumn({ type: 'timestamp' })
+  public createdAt!: Date;
 
-    @UpdateDateColumn({ type: 'timestamp' })
-    public updatedAt!: Date;
+  @UpdateDateColumn({ type: 'timestamp' })
+  public updatedAt!: Date;
 
-    @OneToMany(()=> Qrhistoric, qrhistoric => qrhistoric.id)
-    public qrhistoric : Qrhistoric[];
+  @OneToMany(() => Qrhistoric, (qrhistoric) => qrhistoric.id)
+  public qrhistoric: Qrhistoric[];
+
+  @ManyToOne(() => DriveDirectory, (driveDirectory) => driveDirectory.id)
+  public parent: DriveDirectory;
+
+  @ManyToOne(() => Category, (category) => category.id)
+  public category: Category;
 }

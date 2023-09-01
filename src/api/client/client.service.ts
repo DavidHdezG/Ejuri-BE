@@ -11,10 +11,14 @@ export class ClientService {
   private readonly repository: Repository<Client>;
 
   public findAll(): Promise<Client[]> {
-    return this.repository.find({ where: { isDeleted: false } });
+    return this.repository.find({
+      where: { isDeleted: false },
+      relations: ['category'],
+      order: { name: 'ASC' },
+    });
   }
 
-  public findOne(id: number): Promise<Client> {
+  public findOne(id: string): Promise<Client> {
     return this.repository.findOneBy({ id: id });
   }
 
@@ -24,7 +28,7 @@ export class ClientService {
   }
 
   public async update(
-    id: number,
+    id: string,
     updateClientDto: UpdateClientDto,
   ): Promise<Client> {
     const client: Client = await this.findOne(id);
@@ -35,12 +39,13 @@ export class ClientService {
     return this.repository.save(client);
   }
 
-  public async delete(id: number): Promise<Client> {
+  public async delete(id: string): Promise<Client> {
     const client: Client = await this.findOne(id);
     if (!client) {
       throw new NotFoundException('Client not found');
     }
-    client.isDeleted = true;
+    await this.repository.delete(id);
+    Object.assign(client, {id: "___"+id ,isDeleted: true });
     return this.repository.save(client);
   }
 }

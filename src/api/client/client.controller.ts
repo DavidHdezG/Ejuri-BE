@@ -14,7 +14,7 @@ export class ClientController {
     private readonly service: ClientService;
 
     @Get(':id')
-    public async findOne(@Param('id', ParseIntPipe)id: number): Promise<Client>{
+    public async findOne(@Param('id')id: string): Promise<Client>{
         const client= await this.service.findOne(id);
         if(!client){
             throw new NotFoundException('Client not found');
@@ -34,7 +34,7 @@ export class ClientController {
 
     @Delete(':id')
     @Roles(Role.ADMIN)
-    public delete(@Param('id', ParseIntPipe)id: number): Promise<Client>{
+    public delete(@Param('id')id: string): Promise<Client>{
         return this.service.delete(id);
     }
 }

@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 export class CreateQrhistoricDto {
-    @IsNumber()
+    /* @IsNumber() */
     @IsNotEmpty()
     client:string;
     @IsString()
@@ -12,13 +12,13 @@ export class CreateQrhistoricDto {
     @IsString()
     @IsNotEmpty()
     document:string; 
-    @IsString()
+    /* @IsString() */
     @IsNotEmpty()
     category:string;
     @IsString()
     @IsNotEmpty()
     qr:string;
-    @IsString()
+    @IsNumber()
     @IsNotEmpty()
     user:string;
 }

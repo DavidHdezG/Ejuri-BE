@@ -1,8 +1,9 @@
-GET http://localhost:3001/documents
+### List all documents
+GET localhost:3001/documents
 
 
 
-###
+### Sign up a new user
 POST http://localhost:3001/users/signup
 Content-Type: application/json
 
@@ -11,21 +12,30 @@ Content-Type: application/json
     "email": "test3@blucapital.mx",
     "password": "123"
 }
-###
+### Sign in a user
 POST http://localhost:3001/users/signin
 Content-Type: application/json
 
 {
     "name": "Test2",
     "email": "test@blucapital.mx",
-    "password": "123"
+    "password": "1234"
 }
 
-###
+### Get current user
 GET http://localhost:3001/users/user
-###
+### Get all users
 GET http://localhost:3001/users
 
-###
-
+### Sign out a user
 POST http://localhost:3001/users/signout
+
+### Change password 
+POST http://localhost:3001/users/change-password
+Content-Type: application/json
+
+{
+    "email": "test@blucapital.mx",
+    "password": "123",
+    "newPassword": "1234"
+}
