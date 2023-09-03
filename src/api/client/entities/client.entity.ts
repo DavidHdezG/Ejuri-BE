@@ -23,12 +23,6 @@ export class Client {
   @Column({ type: 'boolean', default: false })
   public isDeleted: boolean;
 
-  @CreateDateColumn({ type: 'timestamp' })
-  public createdAt!: Date;
-
-  @UpdateDateColumn({ type: 'timestamp' })
-  public updatedAt!: Date;
-
   @OneToMany(() => Qrhistoric, (qrhistoric) => qrhistoric.id)
   public qrhistoric: Qrhistoric[];
 
