@@ -8,7 +8,7 @@ import { Roles } from 'src/users/decorators/roles.decorator';
 import { Role } from 'src/users/interfaces/role.interface';
 
 @Controller('client')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(/* AuthGuard, */ RolesGuard)
 export class ClientController {
     @Inject(ClientService)
     private readonly service: ClientService;
@@ -22,9 +22,10 @@ export class ClientController {
         return client;
     }
     
+    // TODO: Probar la creación de carpetas con clientes nuevos
     @Post()
-    public create(@Body() body: CreateClientDto): Promise<Client>{
-        return this.service.create(body);
+    public create(@Body() folderName:string, @Body() parentFolderId: string ): Promise<Client>{
+        return this.service.create(folderName, parentFolderId);
     }
         
     @Get()

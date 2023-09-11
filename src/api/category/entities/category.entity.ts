@@ -11,6 +11,9 @@ export class Category {
     @Column()
     public name:string
     
+    @Column({nullable:true})
+    public driveId:string
+
     @OneToMany(()=> Qrhistoric, qrhistoric => qrhistoric.id)
     public qrhistoric: Qrhistoric[];
 

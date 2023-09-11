@@ -7,12 +7,16 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfigService } from './shared/typeorm/typeorm.service';
 import { ApiModule } from './api/api.module';
-
+import { CronjobsModule } from './cronjobs/cronjobs.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { DriveModule } from './drive/drive.module';
 const envFilePath:string = getEnvPath(`${__dirname}/common/envs`);
 @Module({
-  imports: [UsersModule, ConfigModule.forRoot({ envFilePath, isGlobal: true }),
+  imports: [ScheduleModule.forRoot(),UsersModule, ConfigModule.forRoot({ envFilePath, isGlobal: true }),
             TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService}),
-            ApiModule],
+            ApiModule,
+            CronjobsModule,
+            DriveModule],
   controllers: [AppController],
   providers: [AppService],
 })

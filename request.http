@@ -8,9 +8,10 @@ POST http://localhost:3001/users/signup
 Content-Type: application/json
 
 {
-    "name": "Test3",
-    "email": "test3@blucapital.mx",
-    "password": "123"
+    "name": "Jesús Armando Rojas Gómez",
+    "email": "jrojas@blucapital.mx",
+    "password": "secret",
+    "role": "admin"
 }
 ### Sign in a user
 POST http://localhost:3001/users/signin

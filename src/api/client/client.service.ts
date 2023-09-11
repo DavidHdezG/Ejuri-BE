@@ -1,14 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from './entities/client.entity';
 import { Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { DriveService } from 'src/drive/drive.service';
 
 @Injectable()
 export class ClientService {
   @InjectRepository(Client)
   private readonly repository: Repository<Client>;
+  @Inject(DriveService)
+  private readonly driveService: DriveService;
+
 
   public findAll(): Promise<Client[]> {
     return this.repository.find({
@@ -22,8 +26,16 @@ export class ClientService {
     return this.repository.findOneBy({ id: id });
   }
 
-  public create(body: CreateClientDto): Promise<Client> {
-    const client: Client = this.repository.create(body);
+
+  // TODO: Probar la creación de carpetas con clientes nuevos
+  public async create(folderName:string, parentFolderId:string): Promise<Client> {
+    const idFolder = await this.driveService.createFolder(folderName,parentFolderId);
+    const folder: CreateClientDto = {
+      id: idFolder,
+      name: folderName,
+    };
+
+    const client: Client = this.repository.create(folder);
     return this.repository.save(client);
   }
 

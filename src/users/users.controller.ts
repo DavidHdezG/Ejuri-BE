@@ -44,6 +44,18 @@ export class UsersController {
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
+  @Post('register-user')
+  @UseGuards(AuthGuard)
+  @Roles(Role.ADMIN)
+  async registerUser(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<User> {
+    const user = await this.authService.signup(createUserDto);
+    return user;
+  }
+
+
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post('signin')
   async signIn(
     @Body('email') email: string,
@@ -69,7 +81,7 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  @Roles(Role.ADMIN)
+  @Roles(Role.JURIDICO)
   @Get()
   async findAll(): Promise<User[]> {
     return await this.usersService.findAll();

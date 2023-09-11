@@ -10,7 +10,7 @@ const scrypt = promisify(_scrypt);
 @Injectable()
 export class AuthService {
   constructor(private usersService: UsersService) {}
-  async signup(createUserDto: CreateUserDto) {
+  async signup(createUserDto: CreateUserDto): Promise<User> {
     const users = await this.usersService.findOne(createUserDto.email);
     if (users) {
       throw new BadRequestException('email in use');
@@ -24,7 +24,7 @@ export class AuthService {
     return user;
   }
 
-  async signin(email:string,password:string){
+  async signin(email:string,password:string): Promise<User>{
     const user = await this.usersService.findOne(email);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -37,7 +37,7 @@ export class AuthService {
     return user;
   }
 
-  async changePassword( email:string, password:string, newPassword:string){
+  async changePassword( email:string, password:string, newPassword:string): Promise<User>{
     const user = await this.signin(email,password);
     if (!user) {
       throw new NotFoundException('Contraseña incorrecta');
