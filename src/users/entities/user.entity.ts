@@ -32,6 +32,7 @@ export class User {
   updatedAt: Date;
   @Column({ type: 'enum', enum: Role, default: Role.JURIDICO })
   role: Role;
+
   @OneToMany(() => Qrhistoric, (qrhistoric) => qrhistoric.id)
   qrhistoric: Qrhistoric[];
 }

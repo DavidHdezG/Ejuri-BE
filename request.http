@@ -1,5 +1,5 @@
 ### List all documents
-GET localhost:3001/documents
+GET http://ec2-3-145-169-99.us-east-2.compute.amazonaws.com/documents
 
 
 
@@ -8,9 +8,9 @@ POST http://localhost:3001/users/signup
 Content-Type: application/json
 
 {
-    "name": "Jesús Armando Rojas Gómez",
-    "email": "jrojas@blucapital.mx",
-    "password": "secret",
+    "name": "David Eduardo Hernández García",
+    "email": "dhernandez@blucapital.mx",
+    "password": "asd",
     "role": "admin"
 }
 ### Sign in a user
@@ -18,15 +18,24 @@ POST http://localhost:3001/users/signin
 Content-Type: application/json
 
 {
-    "name": "Test2",
-    "email": "test@blucapital.mx",
-    "password": "1234"
+    "name": "Jesús Armando Rojas Gómez",
+    "email": "dhernandez@blucapital.mx",
+    "password": "asd"
+}
+###
+POST http://ec2-18-224-54-81.us-east-2.compute.amazonaws.com:3000/users/signin
+Content-Type: application/json
+
+{
+    "name": "Jesús Armando Rojas Gómez",
+    "email": "dhernandez@blucapital.mx",
+    "password": "asd"
 }
 
 ### Get current user
 GET http://localhost:3001/users/user
 ### Get all users
-GET http://localhost:3001/users
+GET http://ec2-3-145-169-99.us-east-2.compute.amazonaws.com/users
 
 ### Sign out a user
 POST http://localhost:3001/users/signout
