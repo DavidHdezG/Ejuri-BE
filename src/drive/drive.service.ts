@@ -5,10 +5,12 @@ import jsqr from 'jsQR';
 import { PDFDocument, rgb } from 'pdf-lib';
 import { pdfToPng } from 'pdf-to-png-converter';
 import { google } from 'googleapis';
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.CLIENT_SECRET;
-const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
+const CLIENT_ID =
+  '513836203875-vm90lgm5caqs3u838s9b4olfkvnpp095.apps.googleusercontent.com';
+const CLIENT_SECRET = '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';
+const REDIRECT_URI = 'https://developers.google.com/oauthplayground';
+const REFRESH_TOKEN =
+  '1//04wuXAzmVznYqCgYIARAAGAQSNwF-L9IrJnToRPXj6_7pti9W1JX6UwU04dxEoDd_EC70mVm8SSfbSbE_hhX6UnbbSha1YdbrsGo';
 const oauth2Client = new google.auth.OAuth2(
   CLIENT_ID,
   CLIENT_SECRET,

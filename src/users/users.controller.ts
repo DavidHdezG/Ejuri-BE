@@ -81,7 +81,7 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  @Roles(Role.JURIDICO)
+  @Roles(Role.JURIDICO, Role.ADMIN)
   @Get()
   async findAll(): Promise<User[]> {
     return await this.usersService.findAll();
