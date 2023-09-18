@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import path from 'path';
 import jimp from 'jimp';
 import jsqr from 'jsqr';
 import { PDFDocument, rgb } from 'pdf-lib';
@@ -130,16 +129,8 @@ export class DriveService {
     const inputData = fs.readFileSync(inputPath);
     const pdfDoc = await PDFDocument.load(inputData);
 
-    // Crear un nuevo documento solo con la primera página
-    // const firstPage = pdfDoc.getPages()[0];
-
-    // const newPdfDoc = await PDFDocument.create();
-    // const [copiedPage] = await newPdfDoc.copyPages(pdfDoc, [0]);
-    // newPdfDoc.addPage(copiedPage);
     pdfDoc.removePage(0);
     const old = await pdfDoc.save();
-    // Guardar el nuevo documento con la primera página en un archivo
-    // const newPdfBytes = await newPdfDoc.save();
 
     const qrPNG = await pdfToPng(inputPath, {
       outputFolder: __dirname + '/temp/',
@@ -147,8 +138,6 @@ export class DriveService {
     });
     /* fs.writeFileSync(outputPath, newPdfBytes); */
     fs.writeFileSync(inputPath, old);
-
-    // ⁄Parsear el PDF para extraer texto e imágenes
 
     return { inputPath, qrPNG };
   }
@@ -162,7 +151,6 @@ export class DriveService {
       imagen.bitmap.width,
       imagen.bitmap.height,
     );
-    // TODO: parsear a JSON
     return code ? code.data : null;
   }
 
@@ -176,8 +164,6 @@ export class DriveService {
       const fileData = await this.extraerYGuardarPaginaQR(inputPath);
 
       const qrData = await this.readQR(fileData.qrPNG[0].path);
-      // TODO: PASAR UN JSON CON LA INFO Y YA MANEJARLA AQUí
-      // * If
 
       let finalData: FinalData = JSON.parse(qrData);
       let fileName:string = ""
@@ -192,13 +178,13 @@ export class DriveService {
         console.log(JSON.parse(qrData));
         console.log(category )
       }
-      // ? SE SUBE EL ARCHIVO
-      this.uploadFile(fileName, inputPath, /* finalData.name */"1-uBzk8Ny-mLijePleg02BJ8ROYAb94vr")
+      // * SE SUBE EL ARCHIVO
+      this.uploadFile(fileName, inputPath, finalData.name)
 
 
       // Se borran los archivos temporales locales creados
       console.log(inputPath);
-      /* fs.unlinkSync(inputPath); */
+      fs.unlinkSync(inputPath);
       fs.unlinkSync(fileData.qrPNG[0].path);
     }
   }
@@ -211,7 +197,7 @@ export class DriveService {
     const folderMetadata = {
       name: folderName,
       mimeType: 'application/vnd.google-apps.folder',
-      parents: [parentFolderId], // Si deseas que la carpeta esté dentro de otra carpeta
+      parents: [parentFolderId], 
     };
 
     const folder = await drive.files.create({
@@ -223,8 +209,6 @@ export class DriveService {
   }
 
   async sendFileToTrash(fileId:string) {
-    // const fileId = "1lyEjQbxWy3er4Vln_j3QVxR_esxLZwr5";
-  
     try {
       await drive.files.update({
         fileId: fileId,

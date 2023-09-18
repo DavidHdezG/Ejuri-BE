@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
   Session,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
@@ -23,6 +24,7 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import { Roles } from './decorators/roles.decorator';
 import { Role } from './interfaces/role.interface';
 import { RolesGuard } from './guards/roles.guard';
+import { Status } from './interfaces/status.interface';
 @Controller('users')
 @UseGuards(RolesGuard)
 export class UsersController {
@@ -71,6 +73,15 @@ export class UsersController {
   @UseGuards(AuthGuard)
   signOut(@Session() session: any) {
     session.userId = null;
+  }
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('confirmAccount/:token')
+  async confirmAccount(@Param('token') token:string){
+    const user = await this.authService.confirmAcount(token);
+    if(!user){
+      return  new BadRequestException("Error al autentificar")
+    }
+    return user;
   }
 
   @UseGuards(AuthGuard)

@@ -9,7 +9,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Qrhistoric } from '../../qrhistoric/entities/qrhistoric.entity';
-import { DriveDirectory } from 'src/api/drive-directory/entities/drive-directory.entity';
 import { Category } from 'src/api/category/entities/category.entity';
 
 @Entity()

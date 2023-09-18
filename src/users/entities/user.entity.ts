@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Role } from '../interfaces/role.interface';
+import { Status } from '../interfaces/status.interface';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -35,4 +36,7 @@ export class User {
 
   @OneToMany(() => Qrhistoric, (qrhistoric) => qrhistoric.id)
   qrhistoric: Qrhistoric[];
+
+  @Column({type: 'enum',enum: Status,default:Status.NO_CONFIRMADO})
+  status:Status
 }
