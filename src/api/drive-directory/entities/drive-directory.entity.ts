@@ -12,6 +12,5 @@ export class DriveDirectory {
     public parent: string;
     @ManyToOne(()=> Category, category => category.driveDirectory)
     public category: Category;
-    @OneToMany(()=>Client, client => client.parent)
-    public clients: Client[];
+
 }

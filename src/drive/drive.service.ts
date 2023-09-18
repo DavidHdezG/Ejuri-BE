@@ -1,17 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import path from 'path';
 import jimp from 'jimp';
-import jsqr from 'jsQR';
+import jsqr from 'jsqr';
 import { PDFDocument, rgb } from 'pdf-lib';
 import { pdfToPng } from 'pdf-to-png-converter';
 import { google } from 'googleapis';
-const CLIENT_ID =
-  '513836203875-vm90lgm5caqs3u838s9b4olfkvnpp095.apps.googleusercontent.com';
-const CLIENT_SECRET = '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';
-const REDIRECT_URI = 'https://developers.google.com/oauthplayground';
-const REFRESH_TOKEN =
-  '1//04wuXAzmVznYqCgYIARAAGAQSNwF-L9IrJnToRPXj6_7pti9W1JX6UwU04dxEoDd_EC70mVm8SSfbSbE_hhX6UnbbSha1YdbrsGo';
-const oauth2Client = new google.auth.OAuth2(
+
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET= process.env.CLIENT_SECRET;
+const REDIRECT_URI = process.env. REDIRECT_URI;
+const REFRESH_TOKEN= process.env.REFRESH_TOKEN;
+
+  const oauth2Client = new google.auth.OAuth2(
   CLIENT_ID,
   CLIENT_SECRET,
   REDIRECT_URI,
@@ -49,6 +49,10 @@ export class DriveService {
       if (!fs.existsSync(rutaCarpeta))
         fs.mkdirSync(rutaCarpeta, { recursive: true });
       await this.downloadFile(files[item].id, rutaCompletaArchivoDestino);
+
+      // TODO: SE MANDA EL ARCHIVO EN DRIVE A LA BASURA
+       this.sendFileToTrash(files[item].id);
+
     }
   }
   // ? Como subir los archivos a las carpetas correspondientes?
@@ -176,16 +180,25 @@ export class DriveService {
       // * If
 
       let finalData: FinalData = JSON.parse(qrData);
-
+      let fileName:string = ""
       if (finalData) {
-        const categoryFolder = await this.categoryService.findOne(
+        const category = await this.categoryService.findOne(
           finalData.category.toString(),
         );
-            
+        fileName = `${finalData.folio} ${finalData.document}`;
+        if(finalData.useComments){
+          fileName=fileName.concat(` ${finalData.comments}`);
+        }
+        console.log(JSON.parse(qrData));
+        console.log(category )
       }
-      console.log(JSON.parse(qrData));
+      // ? SE SUBE EL ARCHIVO
+      this.uploadFile(fileName, inputPath, /* finalData.name */"1-uBzk8Ny-mLijePleg02BJ8ROYAb94vr")
+
+
       // Se borran los archivos temporales locales creados
-      fs.unlinkSync(inputPath);
+      console.log(inputPath);
+      /* fs.unlinkSync(inputPath); */
       fs.unlinkSync(fileData.qrPNG[0].path);
     }
   }
@@ -194,6 +207,7 @@ export class DriveService {
     folderName: string,
     parentFolderId: string,
   ): Promise<string> {
+
     const folderMetadata = {
       name: folderName,
       mimeType: 'application/vnd.google-apps.folder',
@@ -206,5 +220,25 @@ export class DriveService {
     });
 
     return folder.data.id;
+  }
+
+  async sendFileToTrash(fileId:string) {
+    // const fileId = "1lyEjQbxWy3er4Vln_j3QVxR_esxLZwr5";
+  
+    try {
+      await drive.files.update({
+        fileId: fileId,
+        requestBody: {
+          trashed: true,
+        },
+      });
+  
+      console.log("Archivo movido a la papelera de reciclaje con éxito.");
+    } catch (error) {
+      console.error(
+        "Error al mover el archivo a la papelera de reciclaje:",
+        error
+      );
+    }
   }
 }

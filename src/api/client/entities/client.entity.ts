@@ -26,9 +26,6 @@ export class Client {
   @OneToMany(() => Qrhistoric, (qrhistoric) => qrhistoric.id)
   public qrhistoric: Qrhistoric[];
 
-  @ManyToOne(() => DriveDirectory, (driveDirectory) => driveDirectory.id)
-  public parent: DriveDirectory;
-
   @ManyToOne(() => Category, (category) => category.id)
   public category: Category;
 }

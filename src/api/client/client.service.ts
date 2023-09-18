@@ -28,11 +28,13 @@ export class ClientService {
 
 
   // TODO: Probar la creación de carpetas con clientes nuevos
-  public async create(folderName:string, parentFolderId:string): Promise<Client> {
+  public async create(createClientDto: CreateClientDto): Promise<Client> {
+    const folderName:string= createClientDto.name;
+    const parentFolderId :string= createClientDto.id;
     const idFolder = await this.driveService.createFolder(folderName,parentFolderId);
     const folder: CreateClientDto = {
       id: idFolder,
-      name: folderName,
+      name: createClientDto.name,
     };
 
     const client: Client = this.repository.create(folder);
