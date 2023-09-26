@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { Role } from './interfaces/role.interface';
 
 @Injectable()
 export class UsersService {
@@ -15,7 +17,7 @@ export class UsersService {
   }
 
   public async findOne(email: string): Promise<User> {
-    return await this.repository.findOne({ where: { email: email } });
+    return await this.repository.findOne({ where: { email: email, isDeleted:false } });
   }
 
   public async findOneById(id: number): Promise<User> {
@@ -23,15 +25,20 @@ export class UsersService {
   }
 
   public async findAll(): Promise<User[]> {
-    return await this.repository.find();
+    return await this.repository.find({ where: { isDeleted: false } });
   }
 
-  public async update(id: number, userdto: CreateUserDto): Promise<User> {
+  public async findDeleted(): Promise<User[]> {
+    return await this.repository.find({ where: { isDeleted: true } });
+  }
+
+  public async update(id: number, userdto: UpdateUserDto): Promise<User> {
     const user = await this.findOneById(id);
     if (!user) {
       throw new NotFoundException('User not found');
     }
     Object.assign(user, userdto);
+    
     return await this.repository.save(user);
   }
 
@@ -41,6 +48,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     user.isDeleted = true;
+    user.email= user.email + '-deleted';
     return await this.repository.save(user);
   }
 }

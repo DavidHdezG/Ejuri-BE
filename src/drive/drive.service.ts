@@ -40,7 +40,9 @@ export class DriveService {
   constructor(private readonly categoryService: CategoryService) {}
 
   async downloadAllFiles(): Promise<void> {
+    /* console.log("Descargando")
     const files = await this.readFolder();
+    console.log(files)
     for (const item in files) {
       const nombreArchivoDestino = files[item].name; // Cambia el nombre según lo que necesites
       const rutaCompletaArchivoDestino = `${__dirname}/temp/${nombreArchivoDestino}`;
@@ -50,9 +52,30 @@ export class DriveService {
       await this.downloadFile(files[item].id, rutaCompletaArchivoDestino);
 
       // TODO: SE MANDA EL ARCHIVO EN DRIVE A LA BASURA
-       this.sendFileToTrash(files[item].id);
+      await this.sendFileToTrash(files[item].id);
 
     }
+    return "listo" */
+
+    const files = await this.readFolder();
+    console.log(files)
+    const downloadPromises = files.map(async (item) => {
+      const nombreArchivoDestino = item.name; // Cambia el nombre según lo que necesites
+      const rutaCompletaArchivoDestino = `${__dirname}/temp/${nombreArchivoDestino}`;
+      const rutaCarpeta = `${__dirname}/temp/`;
+      
+      if (!fs.existsSync(rutaCarpeta)) {
+        fs.mkdirSync(rutaCarpeta, { recursive: true });
+      }
+  
+      await this.downloadFile(item.id, rutaCompletaArchivoDestino);
+      await this.sendFileToTrash(item.id);
+    });
+  
+    // Esperar a que se completen todas las descargas y envíos a la papelera de reciclaje
+    await Promise.all(downloadPromises);
+    console.log("ya jaja")
+    return
   }
   // ? Como subir los archivos a las carpetas correspondientes?
   async uploadFile(
@@ -142,6 +165,24 @@ export class DriveService {
     return { inputPath, qrPNG };
   }
 
+  async extractFirstPage(inputPath: string){
+    const inputData = fs.readFileSync(inputPath);
+    const pdfDoc = await PDFDocument.load(inputData);
+
+    pdfDoc.removePage(0);
+    const old = await pdfDoc.save();
+    fs.writeFileSync(inputPath, old);
+    return inputPath
+  }
+
+  async extractQR(inputPath:string ){
+    const qrPNG = await pdfToPng(inputPath, {
+      outputFolder: __dirname + '/temp/',
+      pagesToProcess: [1],
+    });
+    return qrPNG
+  }
+
   async readQR(inputPath: string): Promise<string> {
     const imagen = await jimp.read(inputPath);
     const { data } = imagen.bitmap;
@@ -155,19 +196,22 @@ export class DriveService {
   }
 
   async readTempFolder(): Promise<void> {
+    console.log("Archivos locales")
+    let fileIdDrive="";
     const rutaCarpeta = `${__dirname}/temp/`;
     const files = fs.readdirSync(rutaCarpeta, { recursive: false });
     for (const item in files) {
-      console.log(files[item]);
+      console.log("files[item]: "+files[item]);
       const inputPath = rutaCarpeta + files[item];
 
-      const fileData = await this.extraerYGuardarPaginaQR(inputPath);
+      const fileData = await this.extractQR(inputPath);
 
-      const qrData = await this.readQR(fileData.qrPNG[0].path);
+      const qrData = await this.readQR(fileData[0].path);
 
       let finalData: FinalData = JSON.parse(qrData);
       let fileName:string = ""
       if (finalData) {
+        await this.extractFirstPage(inputPath)
         const category = await this.categoryService.findOne(
           finalData.category.toString(),
         );
@@ -176,16 +220,23 @@ export class DriveService {
           fileName=fileName.concat(` ${finalData.comments}`);
         }
         console.log(JSON.parse(qrData));
-        console.log(category )
-      }
-      // * SE SUBE EL ARCHIVO
-      this.uploadFile(fileName, inputPath, finalData.name)
+        fileIdDrive = await this.uploadFile(fileName, inputPath, finalData.name)
+      }else{
+        console.log("no qr item: "+item)
+        fileIdDrive = await this.uploadFile(files[item].toString(), inputPath,toMoveFolderId )
 
+        await new Promise(resolve => setTimeout(resolve, 5000));
+
+      }
+
+      console.log(fileIdDrive);
+
+      // * SE SUBE EL ARCHIVO
 
       // Se borran los archivos temporales locales creados
-      console.log(inputPath);
+      console.log("inputPath: "+inputPath);
       fs.unlinkSync(inputPath);
-      fs.unlinkSync(fileData.qrPNG[0].path);
+      fs.unlinkSync(fileData[0].path);
     }
   }
 

@@ -71,13 +71,13 @@ export class AuthService {
       port: 587,
       secure: false,
       auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
+        user: 'dhernandez@blucapital.mx',
+        pass: 'klloxegascwifmmx',
       },
     });
 
-    const token = jwt.sign({email:user.email},process.env.JWT_SECRET)
-    const urlConfirm = `${process.env.FRONTEND_URL}/confirmAccount/${token}`;
+    const token = jwt.sign({email:user.email},"PiAcB21pfg0mosUS1CQcby2QbCawWZ6Dn1Nx858rUQ9dwcbfcIsf9ca5FXUvVfwc")
+    const urlConfirm = `http://ec2-3-17-148-180.us-east-2.compute.amazonaws.com/confirmAccount/${token}`;
     const mailDetails = {
       from: "Ejuri <dhernandez@blucapital.mx>", // sender address
       to: user.email, // receiver email

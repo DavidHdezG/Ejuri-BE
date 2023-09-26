@@ -9,6 +9,8 @@ import {
   Session,
   UseGuards,
   BadRequestException,
+  Delete,
+  Patch,
 } from '@nestjs/common';
 
 import { UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
@@ -25,6 +27,7 @@ import { Roles } from './decorators/roles.decorator';
 import { Role } from './interfaces/role.interface';
 import { RolesGuard } from './guards/roles.guard';
 import { Status } from './interfaces/status.interface';
+import { UpdateUserDto } from './dto/update-user.dto';
 @Controller('users')
 @UseGuards(RolesGuard)
 export class UsersController {
@@ -52,6 +55,7 @@ export class UsersController {
   async registerUser(
     @Body() createUserDto: CreateUserDto,
   ): Promise<User> {
+    console.log(createUserDto)
     const user = await this.authService.signup(createUserDto);
     return user;
   }
@@ -92,11 +96,20 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  @Roles(Role.JURIDICO, Role.ADMIN)
+  @Roles(Role.ADMIN)
   @Get()
   async findAll(): Promise<User[]> {
     return await this.usersService.findAll();
   }
+
+  @UseGuards(AuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Roles(Role.ADMIN)
+  @Get('deleted')
+  async findDeleted(): Promise<User[]> {
+    return await this.usersService.findDeleted();
+  }
+
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':id')
@@ -111,7 +124,7 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  @Post('change-password')
+  @Post('changePassword')
   async changePassword(
     @CurrentUser() user: User,
     @Body('password') password: string,
@@ -121,5 +134,33 @@ export class UsersController {
       throw new UnauthorizedException();
     }
     return await this.authService.changePassword(user.email, password, newPassword);
+  }
+
+  @UseGuards(AuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  async delete(@Param('id') id: string): Promise<User> {
+    const user = await this.usersService.delete(parseInt(id));
+    if (!user) {
+      throw new NotFoundException();
+    }
+    return user;
+  }
+
+  @UseGuards(AuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Patch('edit/:id')
+  @Roles(Role.ADMIN)
+  async edit(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<User> {
+    console.log(updateUserDto);
+    const user = await this.usersService.update(parseInt(id), updateUserDto);
+    if (!user) {
+      throw new NotFoundException();
+    }
+    return user;
   }
 }

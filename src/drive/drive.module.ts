@@ -4,9 +4,11 @@ import { DocumentsModule } from 'src/api/documents/documents.module';
 import { ClientModule } from 'src/api/client/client.module';
 import { CategoryModule } from 'src/api/category/category.module';
 import { CategoryService } from 'src/api/category/category.service';
+import { DriveController } from './drive.controller';
 
 @Module({
   imports: [CategoryModule],
-  providers: [DriveService/* , CategoryService */]
+  providers: [DriveService/* , CategoryService */],
+  controllers: [DriveController]
 })
 export class DriveModule {}

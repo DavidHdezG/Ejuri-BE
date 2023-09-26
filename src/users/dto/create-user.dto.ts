@@ -1,4 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString } from "class-validator";
+import { Role } from "../interfaces/role.interface";
 
 export class CreateUserDto{
     @IsString()
@@ -7,6 +8,10 @@ export class CreateUserDto{
     @IsEmail()
     @IsNotEmpty()
     email:string;
+
     @IsNotEmpty()
     password:string;
+    
+    @IsNotEmpty()
+    role:Role;
 }
