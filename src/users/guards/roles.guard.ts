@@ -3,14 +3,16 @@ import { Reflector } from '@nestjs/core';
 import { Role } from '../interfaces/role.interface';
 import { User } from '../entities/user.entity';
 import { Observable } from 'rxjs';
+import { RolesService } from '../roles/roles.service';
+import { UsersService } from '../users.service';
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private reflector: Reflector, private rolesService:RolesService, private userService:UsersService) {}
 
-  canActivate(
+  async canActivate(
     context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
-    const requireRoles = this.reflector.getAllAndOverride<Role[]>('roles', [
+  ): Promise<boolean> {
+    const requireRoles = this.reflector.getAllAndOverride<number>('roleId', [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -18,14 +20,20 @@ export class RolesGuard implements CanActivate {
     if (!requireRoles) {
       return true;
     }
-
-    const request = context.switchToHttp().getRequest();
-
-    const user: User = request.currentUser;
     
-    return requireRoles.some((role)=>{
+    const request = context.switchToHttp().getRequest();
+    
+    const userId = request.currentUser.id;
+    const user = await this.userService.findOneById(userId);
+    console.log(user)
+    /* const userRoles = user.roles; */
+    if(user.roles.id===10){
+        return true;
+    }
+/*     return requireRoles.some((role)=>{
             return user.role?.includes(role);
         })
-
+ */
+  return user.roles.id===requireRoles;
   }
 }

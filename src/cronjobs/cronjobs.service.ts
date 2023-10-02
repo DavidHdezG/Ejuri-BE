@@ -5,18 +5,22 @@ import { randomInt } from 'crypto';
 @Injectable()
 export class CronjobsService {
   constructor(private readonly driveService: DriveService) {}
-/* 
+
   @Cron(CronExpression.EVERY_5_MINUTES)
   async readFolder() {
 
-    try {
-      await this.driveService.downloadAllFiles();
-
-      await new Promise(resolve => setTimeout(resolve, 5000));
-
-      await this.driveService.readTempFolder();
-    } catch (error) {
-      console.log(error.message);
-    }
-  } */
+    this.driveService
+      .downloadAllFiles()
+      .then(async () => {
+        console.log('Descarga completa. Ejecutando readTempFolder()...');
+        await new Promise(resolve => setTimeout(resolve, 5000))
+        return this.driveService.readTempFolder();
+      })
+      .then(() => {
+        console.log('readTempFolder() completada.');
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+  }
 }

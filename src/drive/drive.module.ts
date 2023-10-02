@@ -7,7 +7,7 @@ import { CategoryService } from 'src/api/category/category.service';
 import { DriveController } from './drive.controller';
 
 @Module({
-  imports: [CategoryModule],
+  imports: [CategoryModule, DocumentsModule],
   providers: [DriveService/* , CategoryService */],
   controllers: [DriveController]
 })

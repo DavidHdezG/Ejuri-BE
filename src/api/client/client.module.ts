@@ -8,10 +8,14 @@ import { DocumentsService } from '../documents/documents.service';
 import { CategoryService } from '../category/category.service';
 import { DocumentsModule } from '../documents/documents.module';
 import { CategoryModule } from '../category/category.module';
+import { RolesModule } from 'src/users/roles/roles.module';
+import { UsersService } from 'src/users/users.service';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Client]), CategoryModule],
+  imports: [TypeOrmModule.forFeature([Client]), CategoryModule, RolesModule, UsersModule, DocumentsModule],
   controllers: [ClientController],
-  providers: [ClientService, DriveService]
+  providers: [ClientService, DriveService],
+  exports: [ClientService],
 })
 export class ClientModule {}

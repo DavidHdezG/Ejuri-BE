@@ -4,12 +4,15 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Role } from '../interfaces/role.interface';
+/* import { Role } from '../interfaces/role.interface'; */
 import { Status } from '../interfaces/status.interface';
+import { Role } from '../roles/entities/role.entity';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -31,12 +34,15 @@ export class User {
   @UpdateDateColumn({ type: 'timestamp' })
   @Exclude()
   updatedAt: Date;
-  @Column({ type: 'enum', enum: Role, default: Role.JURIDICO })
-  role: Role;
+/*   @Column({ type: 'enum', enum: Role, default: Role.JURIDICO })
+  role: Role; */
 
   @OneToMany(() => Qrhistoric, (qrhistoric) => qrhistoric.id)
   qrhistoric: Qrhistoric[];
 
   @Column({type: 'enum',enum: Status,default:Status.NO_CONFIRMADO})
   status:Status
+  
+  @ManyToOne(() => Role, (role) => role.id)
+  roles: Role;
 }

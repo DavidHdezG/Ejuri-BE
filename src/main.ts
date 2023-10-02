@@ -18,7 +18,7 @@ async function bootstrap() {
   }))
   app.enableCors(
     {
-      origin: 'http://localhost:3000',
+      origin: 'http://ec2-3-17-148-180.us-east-2.compute.amazonaws.com',
       credentials: true,
     }
   );

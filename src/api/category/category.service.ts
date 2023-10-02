@@ -24,6 +24,10 @@ export class CategoryService {
     return this.repository.findOneBy({id: id});
   }
 
+  async findByDriveId(driveId: string) {
+    return this.repository.findOneBy({driveId: driveId});
+  }
+
   async update(id: string, updateCategoryDto: UpdateCategoryDto) {
     const category = await this.findOne(id);
     if (!category) {

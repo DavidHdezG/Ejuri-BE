@@ -27,6 +27,7 @@ export class ClientController {
         }
         return client;
     }
+
     
     // TODO: Probar la creación de carpetas con clientes nuevos
     @Post()
@@ -42,7 +43,7 @@ export class ClientController {
     }
 
     @Delete(':id')
-    @Roles(Role.ADMIN)
+    @Roles(5)
     public delete(@Param('id')id: string): Promise<Client>{
         return this.service.delete(id);
     }

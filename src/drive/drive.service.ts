@@ -6,17 +6,18 @@ import { pdfToPng } from 'pdf-to-png-converter';
 import { google } from 'googleapis';
 
 const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET= process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env. REDIRECT_URI;
-const REFRESH_TOKEN= process.env.REFRESH_TOKEN;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = process.env.REDIRECT_URI;
+const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
 
-  const oauth2Client = new google.auth.OAuth2(
+const oauth2Client = new google.auth.OAuth2(
   CLIENT_ID,
   CLIENT_SECRET,
   REDIRECT_URI,
 );
 import fs from 'fs';
 import { CategoryService } from 'src/api/category/category.service';
+import { DocumentsService } from 'src/api/documents/documents.service';
 oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 const drive = google.drive({
@@ -24,7 +25,7 @@ const drive = google.drive({
   auth: oauth2Client,
 });
 const toMoveFolderId = '1-uBzk8Ny-mLijePleg02BJ8ROYAb94vr';
-
+const failedFolder = '1-WRfT0tWalA0CLOTXS6ayaGxFmjD2V9r';
 interface FinalData {
   category: number;
   name: string;
@@ -37,7 +38,10 @@ interface FinalData {
 
 @Injectable()
 export class DriveService {
-  constructor(private readonly categoryService: CategoryService) {}
+  constructor(
+    private readonly categoryService: CategoryService,
+    private readonly documentService: DocumentsService,
+  ) {}
 
   async downloadAllFiles(): Promise<void> {
     /* console.log("Descargando")
@@ -58,26 +62,26 @@ export class DriveService {
     return "listo" */
 
     const files = await this.readFolder();
-    console.log(files)
+    console.log(files);
+    const rutaCarpeta = `${__dirname}/temp/`;
+
+    if (!fs.existsSync(rutaCarpeta)) {
+      fs.mkdirSync(rutaCarpeta, { recursive: true });
+    }
     const downloadPromises = files.map(async (item) => {
       const nombreArchivoDestino = item.name; // Cambia el nombre según lo que necesites
       const rutaCompletaArchivoDestino = `${__dirname}/temp/${nombreArchivoDestino}`;
-      const rutaCarpeta = `${__dirname}/temp/`;
-      
-      if (!fs.existsSync(rutaCarpeta)) {
-        fs.mkdirSync(rutaCarpeta, { recursive: true });
-      }
-  
+
       await this.downloadFile(item.id, rutaCompletaArchivoDestino);
       await this.sendFileToTrash(item.id);
     });
-  
+
     // Esperar a que se completen todas las descargas y envíos a la papelera de reciclaje
     await Promise.all(downloadPromises);
-    console.log("ya jaja")
-    return
+    console.log('ya jaja');
+    return;
   }
-  // ? Como subir los archivos a las carpetas correspondientes?
+  // ? Como subir los archivos a las carpetas correspondientes
   async uploadFile(
     fileName: string,
     filePath: string,
@@ -104,7 +108,7 @@ export class DriveService {
     try {
       const response = await drive.files.list({
         fields: 'files(id, name)' /* parents */,
-        q: `'${toMoveFolderId}' in parents and trashed = false`,
+        q: `'${toMoveFolderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
       });
       return response.data.files;
       /* for (let item in text) {
@@ -165,22 +169,22 @@ export class DriveService {
     return { inputPath, qrPNG };
   }
 
-  async extractFirstPage(inputPath: string){
+  async extractFirstPage(inputPath: string) {
     const inputData = fs.readFileSync(inputPath);
     const pdfDoc = await PDFDocument.load(inputData);
 
     pdfDoc.removePage(0);
     const old = await pdfDoc.save();
     fs.writeFileSync(inputPath, old);
-    return inputPath
+    return inputPath;
   }
 
-  async extractQR(inputPath:string ){
+  async extractQR(inputPath: string) {
     const qrPNG = await pdfToPng(inputPath, {
       outputFolder: __dirname + '/temp/',
       pagesToProcess: [1],
     });
-    return qrPNG
+    return qrPNG;
   }
 
   async readQR(inputPath: string): Promise<string> {
@@ -196,47 +200,63 @@ export class DriveService {
   }
 
   async readTempFolder(): Promise<void> {
-    console.log("Archivos locales")
-    let fileIdDrive="";
-    const rutaCarpeta = `${__dirname}/temp/`;
-    const files = fs.readdirSync(rutaCarpeta, { recursive: false });
-    for (const item in files) {
-      console.log("files[item]: "+files[item]);
-      const inputPath = rutaCarpeta + files[item];
-
-      const fileData = await this.extractQR(inputPath);
-
-      const qrData = await this.readQR(fileData[0].path);
-
-      let finalData: FinalData = JSON.parse(qrData);
-      let fileName:string = ""
-      if (finalData) {
-        await this.extractFirstPage(inputPath)
-        const category = await this.categoryService.findOne(
-          finalData.category.toString(),
-        );
-        fileName = `${finalData.folio} ${finalData.document}`;
-        if(finalData.useComments){
-          fileName=fileName.concat(` ${finalData.comments}`);
-        }
-        console.log(JSON.parse(qrData));
-        fileIdDrive = await this.uploadFile(fileName, inputPath, finalData.name)
-      }else{
-        console.log("no qr item: "+item)
-        fileIdDrive = await this.uploadFile(files[item].toString(), inputPath,toMoveFolderId )
-
-        await new Promise(resolve => setTimeout(resolve, 5000));
-
+    try {
+      console.log('Archivos locales');
+      let fileIdDrive = '';
+      const rutaCarpeta = `${__dirname}/temp/`;
+      const files = fs.readdirSync(rutaCarpeta, { recursive: false });
+      if (files.length === 0) {
+        console.log('No hay archivos en la carpeta');
+        return;
       }
+      for (const item in files) {
+        const inputPath = rutaCarpeta + files[item];
 
-      console.log(fileIdDrive);
+        const fileData = await this.extractQR(inputPath);
 
-      // * SE SUBE EL ARCHIVO
+        const qrData = await this.readQR(fileData[0].path);
 
-      // Se borran los archivos temporales locales creados
-      console.log("inputPath: "+inputPath);
-      fs.unlinkSync(inputPath);
-      fs.unlinkSync(fileData[0].path);
+        let finalData: FinalData = JSON.parse(qrData);
+        let fileName: string = '';
+        if (finalData) {
+          await this.extractFirstPage(inputPath);
+          /* const category = await this.categoryService.findOne(
+          finalData.category.toString(),
+        ); */
+          const document = await this.documentService.findOne(
+            finalData.document,
+          );
+          fileName = `${finalData.folio} ${document.type}`;
+          if (finalData.useComments) {
+            fileName = fileName.concat(` ${finalData.comments}`);
+          }
+          console.log(JSON.parse(qrData));
+          fileIdDrive = await this.uploadFile(
+            fileName,
+            inputPath,
+            finalData.name,
+          );
+        } else {
+          console.log('no qr item: ' + item);
+          fileIdDrive = await this.uploadFile(
+            files[item].toString().split('.pdf')[0],
+            inputPath,
+            failedFolder,
+          );
+
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
+
+        console.log(fileIdDrive);
+
+        // * SE SUBE EL ARCHIVO
+
+        // Se borran los archivos temporales locales creados
+        fs.unlinkSync(inputPath);
+        fs.unlinkSync(fileData[0].path);
+      }
+    } catch (error) {
+      console.log(error.message);
     }
   }
 
@@ -244,11 +264,10 @@ export class DriveService {
     folderName: string,
     parentFolderId: string,
   ): Promise<string> {
-
     const folderMetadata = {
       name: folderName,
       mimeType: 'application/vnd.google-apps.folder',
-      parents: [parentFolderId], 
+      parents: [parentFolderId],
     };
 
     const folder = await drive.files.create({
@@ -259,7 +278,7 @@ export class DriveService {
     return folder.data.id;
   }
 
-  async sendFileToTrash(fileId:string) {
+  async sendFileToTrash(fileId: string) {
     try {
       await drive.files.update({
         fileId: fileId,
@@ -267,12 +286,12 @@ export class DriveService {
           trashed: true,
         },
       });
-  
-      console.log("Archivo movido a la papelera de reciclaje con éxito.");
+
+      console.log('Archivo movido a la papelera de reciclaje con éxito.');
     } catch (error) {
       console.error(
-        "Error al mover el archivo a la papelera de reciclaje:",
-        error
+        'Error al mover el archivo a la papelera de reciclaje:',
+        error,
       );
     }
   }

@@ -4,17 +4,23 @@ import { UpdateQrhistoricDto } from './dto/update-qrhistoric.dto';
 import { Repository } from 'typeorm';
 import { Qrhistoric } from './entities/qrhistoric.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ClientService } from '../client/client.service';
+import { Client } from '../client/entities/client.entity';
 
 @Injectable()
 export class QrhistoricService {
   @InjectRepository(Qrhistoric)
   private readonly repository: Repository<Qrhistoric>;
-
+  constructor(private clientService:ClientService) {}
   public async create(
     createQrhistoricDto: CreateQrhistoricDto,
   ): Promise<Qrhistoric> {
-    const qrhistoric: Qrhistoric = this.repository.create(createQrhistoricDto);
+    const client:Client = await this.clientService.findOne(
+      createQrhistoricDto.client,
+    );
 
+    const qrhistoric: Qrhistoric = this.repository.create(createQrhistoricDto);
+    console.log(qrhistoric);
     return await this.repository.save(qrhistoric);
   }
 

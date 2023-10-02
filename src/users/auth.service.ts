@@ -17,17 +17,18 @@ const scrypt = promisify(_scrypt);
 export class AuthService {
   constructor(private usersService: UsersService) {}
   async signup(createUserDto: CreateUserDto): Promise<User> {
+    console.log(createUserDto)
     const users = await this.usersService.findOne(createUserDto.email);
     if (users) {
       throw new BadRequestException('email in use');
     }
-
+    const password = createUserDto.password;
     const salt = randomBytes(8).toString('hex');
     const hash = (await scrypt(createUserDto.password, salt, 32)) as Buffer;
     const result = salt + '.' + hash.toString('hex');
     Object.assign(createUserDto, { password: result });
     const user = await this.usersService.create(createUserDto);
-    return await this.sendConfirmationEmail(user);
+    return await this.sendConfirmationEmail(user,password);
   }
 
   async signin(email: string, password: string): Promise<User> {
@@ -64,7 +65,7 @@ export class AuthService {
     return resultUpdate;
   }
 
-  async sendConfirmationEmail(user: User) {
+  async sendConfirmationEmail(user: User,password:string) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       host: 'smtp.gmail.com',
@@ -76,13 +77,16 @@ export class AuthService {
       },
     });
 
-    const token = jwt.sign({email:user.email},"PiAcB21pfg0mosUS1CQcby2QbCawWZ6Dn1Nx858rUQ9dwcbfcIsf9ca5FXUvVfwc")
-    const urlConfirm = `http://ec2-3-17-148-180.us-east-2.compute.amazonaws.com/confirmAccount/${token}`;
+    const token = jwt.sign({email:user.email},process.env.JWT_SECRET)
+    const urlConfirm = `http://localhost:3000/confirmAccount/${token}`;
     const mailDetails = {
       from: "Ejuri <dhernandez@blucapital.mx>", // sender address
       to: user.email, // receiver email
-      subject: "Confirma tu email", // Subject line
-      html: `<p> ${user.name}: <br/> Confirma tu email en <a href="${urlConfirm}">Confirmar</a></p>`,
+      subject: `${user.name}, confirma tu email`, // Subject line
+      html: `<h3>Credenciales:</h3>
+      <p>Correo: ${user.email}<p/> 
+      <p>Contraseña: ${password}<p/> <br/>
+      Confirma tu email en <a href="${urlConfirm}">Confirmar</a></p>`,
   }
     try {
       const info = await transporter.sendMail(mailDetails)
@@ -94,7 +98,6 @@ export class AuthService {
   }
 
   async confirmAcount(token:string){
-    console.log(process.env.JWT_SECRET)
     let email=null;
     try{
       const payload:any = jwt.verify(token,process.env.JWT_SECRET)

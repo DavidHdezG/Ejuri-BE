@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { DriveService } from 'src/drive/drive.service';
+import { CategoryService } from '../category/category.service';
 
 @Injectable()
 export class ClientService {
@@ -12,7 +13,9 @@ export class ClientService {
   private readonly repository: Repository<Client>;
   @Inject(DriveService)
   private readonly driveService: DriveService;
-
+  @Inject(CategoryService)
+  private readonly categoryService: CategoryService;
+  
 
   public findAll(): Promise<Client[]> {
     return this.repository.find({
@@ -27,17 +30,19 @@ export class ClientService {
   }
 
 
-  // TODO: Probar la creación de carpetas con clientes nuevos
+  // * MANDAR EL ID DE LA CATEGORIA AL CREAR EL CLIENTE, de lo contrario = CRASH
   public async create(createClientDto: CreateClientDto): Promise<Client> {
     const folderName:string= createClientDto.name;
     const parentFolderId :string= createClientDto.id;
     const idFolder = await this.driveService.createFolder(folderName,parentFolderId);
+    const category = await this.categoryService.findByDriveId(parentFolderId);
     const folder: CreateClientDto = {
       id: idFolder,
       name: createClientDto.name,
     };
 
     const client: Client = this.repository.create(folder);
+    client.category = category;
     return this.repository.save(client);
   }
 
@@ -62,4 +67,5 @@ export class ClientService {
     Object.assign(client, {id: "___"+id ,isDeleted: true });
     return this.repository.save(client);
   }
+  
 }

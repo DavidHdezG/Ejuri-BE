@@ -7,7 +7,7 @@ import { ClientModule } from 'src/api/client/client.module';
 import { CategoryModule } from 'src/api/category/category.module';
 
 @Module({
-  imports:[ConfigModule,CategoryModule],
+  imports:[ConfigModule,CategoryModule, DocumentsModule],
   providers: [CronjobsService,DriveService]
 })
 export class CronjobsModule {}

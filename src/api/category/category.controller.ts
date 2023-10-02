@@ -22,7 +22,7 @@ import { Role } from 'src/users/interfaces/role.interface';
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
   
-  @Roles(Role.ADMIN)
+  @Roles(5)
   @Post()
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoryService.create(createCategoryDto);
@@ -50,7 +50,7 @@ export class CategoryController {
     return this.categoryService.update(id, updateCategoryDto);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(5)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.categoryService.remove(id);

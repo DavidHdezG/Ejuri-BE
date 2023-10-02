@@ -48,7 +48,7 @@ export class DocumentsController {
   ) {
     return this.documentsService.update(id, updateDocumentDto);
   }
-  @Roles(Role.ADMIN)
+  @Roles(5)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.documentsService.remove(id);

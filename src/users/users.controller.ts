@@ -51,7 +51,7 @@ export class UsersController {
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('register-user')
   @UseGuards(AuthGuard)
-  @Roles(Role.ADMIN)
+  @Roles(10)
   async registerUser(
     @Body() createUserDto: CreateUserDto,
   ): Promise<User> {
@@ -96,7 +96,7 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  @Roles(Role.ADMIN)
+  @Roles(10)
   @Get()
   async findAll(): Promise<User[]> {
     return await this.usersService.findAll();
@@ -104,7 +104,7 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  @Roles(Role.ADMIN)
+  @Roles(10)
   @Get('deleted')
   async findDeleted(): Promise<User[]> {
     return await this.usersService.findDeleted();
@@ -113,7 +113,7 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':id')
-  @Roles(Role.ADMIN)
+  @Roles(10)
   async findOneById(@Param('id') id: string): Promise<User> {
     const user = await this.usersService.findOneById(parseInt(id));
     if (!user) {
@@ -139,7 +139,7 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':id')
-  @Roles(Role.ADMIN)
+  @Roles(10)
   async delete(@Param('id') id: string): Promise<User> {
     const user = await this.usersService.delete(parseInt(id));
     if (!user) {
@@ -151,7 +151,7 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Patch('edit/:id')
-  @Roles(Role.ADMIN)
+  @Roles(10)
   async edit(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,

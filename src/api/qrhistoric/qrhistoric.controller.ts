@@ -30,12 +30,12 @@ export class QrhistoricController {
     }
     return qrhistoric;
   }
-  @Roles(Role.ADMIN)
+  @Roles(5)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateQrhistoricDto: UpdateQrhistoricDto) {
     return this.qrhistoricService.update(+id, updateQrhistoricDto);
   }
-  @Roles(Role.ADMIN)
+  @Roles(5)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.qrhistoricService.remove(+id);
