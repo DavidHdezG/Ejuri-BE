@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ClientController } from './client.controller';
 import { ClientService } from './client.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -11,11 +11,12 @@ import { CategoryModule } from '../category/category.module';
 import { RolesModule } from 'src/users/roles/roles.module';
 import { UsersService } from 'src/users/users.service';
 import { UsersModule } from 'src/users/users.module';
+import { DriveModule } from 'src/drive/drive.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Client]), CategoryModule, RolesModule, UsersModule, DocumentsModule],
+  imports: [TypeOrmModule.forFeature([Client]), CategoryModule, RolesModule, UsersModule, DocumentsModule,forwardRef(() => DriveModule)],
   controllers: [ClientController],
-  providers: [ClientService, DriveService],
+  providers: [ClientService/* , DriveService */],
   exports: [ClientService],
 })
 export class ClientModule {}

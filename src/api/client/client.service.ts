@@ -6,6 +6,7 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { DriveService } from 'src/drive/drive.service';
 import { CategoryService } from '../category/category.service';
+import { Category } from '../category/entities/category.entity';
 
 @Injectable()
 export class ClientService {
@@ -28,8 +29,15 @@ export class ClientService {
   public findOne(id: string): Promise<Client> {
     return this.repository.findOneBy({ id: id });
   }
-
-
+  public async synchronize(id:string,category:Category,name:string): Promise<Client> {
+    const folder : CreateClientDto = {
+      id: id,
+      name: name,
+    };
+    const client: Client = this.repository.create(folder);
+    client.category = category;
+    return await this.repository.save(client);
+  }
   // * MANDAR EL ID DE LA CATEGORIA AL CREAR EL CLIENTE, de lo contrario = CRASH
   public async create(createClientDto: CreateClientDto): Promise<Client> {
     const folderName:string= createClientDto.name;

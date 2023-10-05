@@ -18,12 +18,12 @@ async function bootstrap() {
   }))
   app.enableCors(
     {
-      origin: 'http://ec2-3-17-148-180.us-east-2.compute.amazonaws.com',
+      origin: process.env.FRONTEND_URL,
       credentials: true,
     }
   );
   await app.listen(port,() => {
-    console.log(`Server is running on url `,`http://localhost:${port}`);
+    console.log(`Server is running on url `,`http://localhost:${port} + frontend: ${process.env.FRONTEND_URL}` );
   });
 }
 bootstrap();

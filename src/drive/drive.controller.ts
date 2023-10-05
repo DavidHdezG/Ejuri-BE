@@ -21,4 +21,10 @@ export class DriveController {
         console.error('Error:', error);
       });
   }
+
+  @Post('trigger')
+  async trigger() {
+    await this.driveService.syncDriveFolders();
+  }
+
 }

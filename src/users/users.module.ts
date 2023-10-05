@@ -1,4 +1,4 @@
-import { Module, MiddlewareConsumer } from '@nestjs/common';
+import { Module, MiddlewareConsumer, forwardRef } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -14,7 +14,7 @@ import { RolesModule } from './roles/roles.module';
               secret: 'secret',
               signOptions: { expiresIn: '1d' },
             }),
-            RolesModule],
+            forwardRef(()=>RolesModule)],
   controllers: [UsersController],
   providers: [UsersService, AuthService],
   exports: [UsersService, AuthService],

@@ -6,7 +6,7 @@ import { randomInt } from 'crypto';
 export class CronjobsService {
   constructor(private readonly driveService: DriveService) {}
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  /* @Cron(CronExpression.EVERY_5_MINUTES)
   async readFolder() {
 
     this.driveService
@@ -22,5 +22,13 @@ export class CronjobsService {
       .catch((error) => {
         console.error('Error:', error);
       });
+  } */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async syncDriveFolders() {
+    try {
+      await this.driveService.syncDriveFolders();
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
