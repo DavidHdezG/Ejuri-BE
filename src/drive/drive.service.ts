@@ -1,7 +1,7 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import jimp from 'jimp';
 import jsqr from 'jsqr';
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import { pdfToPng } from 'pdf-to-png-converter';
 import { google } from 'googleapis';
 
@@ -19,7 +19,7 @@ import fs from 'fs';
 import { CategoryService } from 'src/api/category/category.service';
 import { DocumentsService } from 'src/api/documents/documents.service';
 import { ClientService } from 'src/api/client/client.service';
-import { In } from 'typeorm';
+import path from 'path';
 oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 const drive = google.drive({
@@ -28,6 +28,8 @@ const drive = google.drive({
 });
 const toMoveFolderId = '1-uBzk8Ny-mLijePleg02BJ8ROYAb94vr';
 const failedFolder = '1-WRfT0tWalA0CLOTXS6ayaGxFmjD2V9r';
+const buro = '1WWB8xOyMFAy-3Hg1ye5NDO155l4iItKL';
+
 interface FinalData {
   category: number;
   name: string;
@@ -40,24 +42,24 @@ interface FinalData {
 
 @Injectable()
 export class DriveService {
-/*   @Inject(ClientService)
+  /*   @Inject(ClientService)
   private readonly clientService: ClientService; */
 
   constructor(
     private readonly categoryService: CategoryService,
     private readonly documentService: DocumentsService,
-    @Inject(forwardRef(()=>ClientService)) private clientService:ClientService,
+    @Inject(forwardRef(() => ClientService))
+    private clientService: ClientService,
   ) {}
 
-
   async downloadAllFiles(): Promise<void> {
-    const files = await this.readFolder();
-    console.log(files);
+    const files = await this.readDriveFolder();
     const rutaCarpeta = `${__dirname}/temp/`;
 
     if (!fs.existsSync(rutaCarpeta)) {
       fs.mkdirSync(rutaCarpeta, { recursive: true });
     }
+    this.cleanTempFolder();
     const downloadPromises = files.map(async (item) => {
       const nombreArchivoDestino = item.name; // Cambia el nombre según lo que necesites
       const rutaCompletaArchivoDestino = `${__dirname}/temp/${nombreArchivoDestino}`;
@@ -68,7 +70,6 @@ export class DriveService {
 
     // Esperar a que se completen todas las descargas y envíos a la papelera de reciclaje
     await Promise.all(downloadPromises);
-    console.log('ya jaja');
     return;
   }
   // Subir los archivos a las carpetas correspondientes
@@ -94,16 +95,13 @@ export class DriveService {
     });
     return respuesta.data.id;
   }
-  async readFolder(): Promise<any> {
+  async readDriveFolder(): Promise<any> {
     try {
       const response = await drive.files.list({
         fields: 'files(id, name)' /* parents */,
         q: `'${toMoveFolderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
       });
       return response.data.files;
-      /* for (let item in text) {
-        console.log(text[item].id);
-      } */
     } catch (error) {
       console.log(error.message);
     }
@@ -132,24 +130,6 @@ export class DriveService {
     }
   }
 
-  /*   async extraerYGuardarPaginaQR(inputPath: string) {
-    // Leer el archivo PDF de entrada
-    const inputData = fs.readFileSync(inputPath);
-    const pdfDoc = await PDFDocument.load(inputData);
-
-    pdfDoc.removePage(0);
-    const old = await pdfDoc.save();
-
-    const qrPNG = await pdfToPng(inputPath, {
-      outputFolder: __dirname + '/temp/',
-      pagesToProcess: [1],
-    });
-
-    fs.writeFileSync(inputPath, old);
-
-    return { inputPath, qrPNG };
-  } */
-
   async extractFirstPage(inputPath: string) {
     const inputData = fs.readFileSync(inputPath);
     const pdfDoc = await PDFDocument.load(inputData);
@@ -171,7 +151,6 @@ export class DriveService {
   async readQR(inputPath: string): Promise<string> {
     const imagen = await jimp.read(inputPath);
     const { data } = imagen.bitmap;
-    console.log(inputPath);
     const code = jsqr(
       new Uint8ClampedArray(data),
       imagen.bitmap.width,
@@ -212,12 +191,16 @@ export class DriveService {
           if (finalData.useComments) {
             fileName = fileName.concat(` ${finalData.comments}`);
           }
-          console.log(JSON.parse(qrData));
+          fileName = fileName.concat(` ${finalData.date}`);
           fileIdDrive = await this.uploadFile(
             fileName,
             inputPath,
             finalData.name,
           );
+          // * Se sube también a la carpeta de buró general
+          if (finalData.category === 4) {
+            fileIdDrive = await this.uploadFile(fileName, inputPath, buro);
+          }
         } else {
           console.log('no qr item: ' + item);
           fileIdDrive = await this.uploadFile(
@@ -230,8 +213,6 @@ export class DriveService {
         }
 
         console.log(fileIdDrive);
-
-        // * SE SUBE EL ARCHIVO
 
         // Se borran los archivos temporales locales creados
         fs.unlinkSync(inputPath);
@@ -260,7 +241,7 @@ export class DriveService {
     return folder.data.id;
   }
 
-  async sendFileToTrash(fileId: string) {
+  async sendFileToTrash(fileId: string): Promise<void> {
     try {
       await drive.files.update({
         fileId: fileId,
@@ -278,24 +259,23 @@ export class DriveService {
     }
   }
 
-  async syncDriveFolders() {
+  async syncDriveFolders(): Promise<void> {
     try {
       console.log('Sincronizando carpetas...');
       let n = 0;
       const categories = await this.categoryService.findAll();
       for (const category of categories) {
         let folderId = category.driveId;
-        let nextPageToken = null;                                                                                                                                                                                         
+        let nextPageToken = null;
         const objList = [];
-  
-        
+
         do {
           const response = await drive.files.list({
             q: `'${folderId}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'`,
             fields: 'nextPageToken, files(id, name)',
             pageToken: nextPageToken,
           });
-  
+
           for (const item in response.data.files) {
             const temp = {
               id: response.data.files[item].id,
@@ -305,7 +285,11 @@ export class DriveService {
             };
             const exist = await this.clientService.findOne(temp.id);
             if (!exist) {
-              const client = await this.clientService.synchronize(temp.id,temp.category,temp.name);
+              const client = await this.clientService.synchronize(
+                temp.id,
+                temp.category,
+                temp.name,
+              );
               console.log(client);
               n++;
             }
@@ -313,7 +297,7 @@ export class DriveService {
           }
           nextPageToken = response.data.nextPageToken;
         } while (nextPageToken);
-        /* console.log(objList); */
+
       }
       if (n === 0) {
         console.log('No hay carpetas nuevas en el drive');
@@ -321,5 +305,29 @@ export class DriveService {
     } catch (error) {
       console.log(error.message);
     }
+  }
+
+  cleanTempFolder():void {
+    const temp = `${__dirname}/temp/`;
+    const error = `${__dirname}/error/`;
+    if (!fs.existsSync(error)) {
+      fs.mkdirSync(error, { recursive: true });
+    }
+    fs.readdir(temp,(err,files)=>{
+      if(err){
+        console.log(err)
+      }
+      files.forEach(file=>{
+        const sourcePath=path.join(temp,file)
+        const destPath=path.join(error,file)
+  
+        fs.rename(sourcePath,destPath,err=>{
+          if(err){
+            console.log(err)
+          }
+          console.log(`Archivo ${file} movido a ${destPath}`)
+        })
+      })
+    })
   }
 }
