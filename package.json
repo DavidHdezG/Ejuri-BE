@@ -28,6 +28,7 @@
     "@nestjs/passport": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^3.0.3",
+    "@nestjs/swagger": "^7.1.13",
     "@nestjs/typeorm": "^10.0.0",
     "@supabase/supabase-js": "^2.32.0",
     "@types/cookie-session": "^2.0.44",

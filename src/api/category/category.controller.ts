@@ -16,12 +16,15 @@ import { RolesGuard } from 'src/users/guards/roles.guard';
 import { AuthGuard } from 'src/users/guards/auth.guard';
 import { Roles } from 'src/users/decorators/roles.decorator';
 import { Role } from 'src/users/interfaces/role.interface';
+import { ApiCookieAuth, ApiCreatedResponse, ApiForbiddenResponse, ApiNotFoundResponse, ApiOkResponse, ApiResponse } from '@nestjs/swagger';
 
+@ApiCookieAuth()
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
-  
+  @ApiCreatedResponse({ description: 'Categoría creada' })
+  @ApiForbiddenResponse({ description: 'Prohibido.' })
   @Roles(5)
   @Post()
   create(@Body() createCategoryDto: CreateCategoryDto) {
@@ -33,6 +36,9 @@ export class CategoryController {
     return this.categoryService.findAll();
   }
 
+  @ApiOkResponse({ description: 'Categoría encontrada' })
+  @ApiForbiddenResponse({ description: 'Prohibido.' })
+  @ApiNotFoundResponse({ description: 'Categoría no encontrada' })
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const category = await this.categoryService.findOne(id);
@@ -42,6 +48,9 @@ export class CategoryController {
     return category;
   }
 
+  @ApiResponse({ status: 200, description: 'Categoría actualizada' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
+  @ApiResponse({ status: 404, description: 'Categoría no encontrada' })
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -50,6 +59,9 @@ export class CategoryController {
     return this.categoryService.update(id, updateCategoryDto);
   }
 
+  @ApiResponse({ status: 200, description: 'Categoría eliminada' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
+  @ApiResponse({ status: 404, description: 'Categoría no encontrada' })
   @Roles(5)
   @Delete(':id')
   remove(@Param('id') id: string) {

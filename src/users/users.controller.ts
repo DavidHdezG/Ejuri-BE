@@ -28,6 +28,8 @@ import { Role } from './interfaces/role.interface';
 import { RolesGuard } from './guards/roles.guard';
 import { Status } from './interfaces/status.interface';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ApiBody, ApiCookieAuth, ApiResponse } from '@nestjs/swagger';
+@ApiCookieAuth()
 @Controller('users')
 @UseGuards(RolesGuard)
 export class UsersController {
@@ -36,8 +38,10 @@ export class UsersController {
     private readonly jwtService: JwtService,
     private readonly authService: AuthService,
   ) {}
-
+  @ApiResponse({ status: 200, description: 'Usuario creado y sesión iniciada' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
   @UseInterceptors(ClassSerializerInterceptor)
+  @ApiBody({ type: CreateUserDto })
   @Post('signup')
   async createUser(
     @Body() createUserDto: CreateUserDto,
@@ -48,20 +52,38 @@ export class UsersController {
     return user;
   }
 
+  @ApiResponse({ status: 200, description: 'Usuario creado' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('register-user')
   @UseGuards(AuthGuard)
+  @ApiBody({ type: CreateUserDto })
   @Roles(10)
-  async registerUser(
-    @Body() createUserDto: CreateUserDto,
-  ): Promise<User> {
-    console.log(createUserDto)
+  async registerUser(@Body() createUserDto: CreateUserDto): Promise<User> {
+    console.log(createUserDto);
     const user = await this.authService.signup(createUserDto);
     return user;
   }
 
-
+  @ApiResponse({ status: 200, description: 'Sesión iniciada' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   @UseInterceptors(ClassSerializerInterceptor)
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'string',
+          example: 'correo@blucapital.mx',
+        },
+        password: {
+          type: 'string',
+          example: 'password',
+        },
+      },
+    },
+  })
   @Post('signin')
   async signIn(
     @Body('email') email: string,
@@ -73,27 +95,37 @@ export class UsersController {
     return user;
   }
 
+  @ApiResponse({ status: 200, description: 'Sesión cerrada' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
   @Post('signout')
   @UseGuards(AuthGuard)
   signOut(@Session() session: any) {
     session.userId = null;
   }
+
+  @ApiResponse({ status: 200, description: 'Cuenta confirmada' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
+  @ApiResponse({ status: 400, description: 'Error al autentificar' })
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('confirmAccount/:token')
-  async confirmAccount(@Param('token') token:string){
+  async confirmAccount(@Param('token') token: string) {
     const user = await this.authService.confirmAcount(token);
-    if(!user){
-      return  new BadRequestException("Error al autentificar")
+    if (!user) {
+      return new BadRequestException('Error al autentificar');
     }
     return user;
   }
 
+  @ApiResponse({ status: 200, description: 'Usuario actual' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
   @UseGuards(AuthGuard)
   @Get('user')
   user(@CurrentUser() user: User) {
     return user;
   }
 
+  @ApiResponse({ status: 200, description: 'Usuarios encontrados' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Roles(10)
@@ -102,6 +134,8 @@ export class UsersController {
     return await this.usersService.findAll();
   }
 
+  @ApiResponse({ status: 200, description: 'Usuarios eliminados encontrados' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Roles(10)
@@ -110,6 +144,9 @@ export class UsersController {
     return await this.usersService.findDeleted();
   }
 
+  @ApiResponse({ status: 200, description: 'Usuario encontrado' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':id')
@@ -122,6 +159,9 @@ export class UsersController {
     return user;
   }
 
+  @ApiResponse({ status: 200, description: 'Contraseña cambiada' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('changePassword')
@@ -133,9 +173,16 @@ export class UsersController {
     if (!user) {
       throw new UnauthorizedException();
     }
-    return await this.authService.changePassword(user.email, password, newPassword);
+    return await this.authService.changePassword(
+      user.email,
+      password,
+      newPassword,
+    );
   }
 
+  @ApiResponse({ status: 200, description: 'Usuario eliminado' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':id')
@@ -148,10 +195,14 @@ export class UsersController {
     return user;
   }
 
+  @ApiResponse({ status: 200, description: 'Usuario actualizado' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Patch('edit/:id')
   @Roles(10)
+  @ApiBody({ type: UpdateUserDto })
   async edit(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,

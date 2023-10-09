@@ -1,12 +1,17 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty } from "class-validator";
 
 export class CreateDocumentDto {
+    @ApiProperty()
     @IsNotEmpty()
-    id;
+    id:string;
+    @ApiProperty()
     @IsNotEmpty()
-    category;
+    category:any;
     @IsNotEmpty()
-    type;
+    @ApiProperty()
+    type:string;
     @IsNotEmpty()
-    duplicate;
+    @ApiProperty()
+    duplicate:string;
 }

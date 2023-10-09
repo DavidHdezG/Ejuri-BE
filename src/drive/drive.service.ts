@@ -4,7 +4,12 @@ import jsqr from 'jsqr';
 import { PDFDocument } from 'pdf-lib';
 import { pdfToPng } from 'pdf-to-png-converter';
 import { google } from 'googleapis';
-
+import fs from 'fs';
+import { CategoryService } from 'src/api/category/category.service';
+import { DocumentsService } from 'src/api/documents/documents.service';
+import { ClientService } from 'src/api/client/client.service';
+import path from 'path';
+import { promisify } from 'util';
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
@@ -15,20 +20,12 @@ const oauth2Client = new google.auth.OAuth2(
   CLIENT_SECRET,
   REDIRECT_URI,
 );
-import fs from 'fs';
-import { CategoryService } from 'src/api/category/category.service';
-import { DocumentsService } from 'src/api/documents/documents.service';
-import { ClientService } from 'src/api/client/client.service';
-import path from 'path';
 oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 const drive = google.drive({
   version: 'v3',
   auth: oauth2Client,
 });
-const toMoveFolderId = '1-uBzk8Ny-mLijePleg02BJ8ROYAb94vr';
-const failedFolder = '1-WRfT0tWalA0CLOTXS6ayaGxFmjD2V9r';
-const buro = '1WWB8xOyMFAy-3Hg1ye5NDO155l4iItKL';
 
 interface FinalData {
   category: number;
@@ -42,6 +39,9 @@ interface FinalData {
 
 @Injectable()
 export class DriveService {
+  private readonly toMoveFolderId = '1-uBzk8Ny-mLijePleg02BJ8ROYAb94vr';
+  private readonly failedFolder = '1-WRfT0tWalA0CLOTXS6ayaGxFmjD2V9r';
+  private readonly buro = '1WWB8xOyMFAy-3Hg1ye5NDO155l4iItKL';
   /*   @Inject(ClientService)
   private readonly clientService: ClientService; */
 
@@ -99,7 +99,7 @@ export class DriveService {
     try {
       const response = await drive.files.list({
         fields: 'files(id, name)' /* parents */,
-        q: `'${toMoveFolderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
+        q: `'${this.toMoveFolderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
       });
       return response.data.files;
     } catch (error) {
@@ -116,7 +116,6 @@ export class DriveService {
         { responseType: 'stream' },
       );
       const writeStream = fs.createWriteStream(destinationPath);
-
       response.data
         .on('end', () => {
           console.log('Archivo descargado con éxito.');
@@ -192,21 +191,24 @@ export class DriveService {
             fileName = fileName.concat(` ${finalData.comments}`);
           }
           fileName = fileName.concat(` ${finalData.date}`);
+
+          // * Se sube también a la carpeta de buró general
+          if (finalData.category === 4) {
+            fileIdDrive = await this.uploadFile(fileName, inputPath, this.buro);
+          }
+
           fileIdDrive = await this.uploadFile(
             fileName,
             inputPath,
             finalData.name,
           );
-          // * Se sube también a la carpeta de buró general
-          if (finalData.category === 4) {
-            fileIdDrive = await this.uploadFile(fileName, inputPath, buro);
-          }
+          
         } else {
           console.log('no qr item: ' + item);
           fileIdDrive = await this.uploadFile(
             files[item].toString().split('.pdf')[0],
             inputPath,
-            failedFolder,
+            this.failedFolder,
           );
 
           await new Promise((resolve) => setTimeout(resolve, 5000));
