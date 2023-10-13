@@ -12,10 +12,21 @@ import { User } from './entities/user.entity';
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken'
 import { Status } from './interfaces/status.interface';
+
 const scrypt = promisify(_scrypt);
+
+/**
+ * Service to manage the authentication
+ */
 @Injectable()
 export class AuthService {
   constructor(private usersService: UsersService) {}
+
+  /**
+   * Register a new user, encrypt the password and send a confirmation email
+   * @param createUserDto 
+   * @returns 
+   */
   async signup(createUserDto: CreateUserDto): Promise<User> {
     console.log(createUserDto)
     const users = await this.usersService.findOne(createUserDto.email);
@@ -31,6 +42,12 @@ export class AuthService {
     return await this.sendConfirmationEmail(user,password);
   }
 
+  /**
+   * Sign in a user
+   * @param email 
+   * @param password 
+   * @returns 
+   */
   async signin(email: string, password: string): Promise<User> {
     const user = await this.usersService.findOne(email);
     if (!user) {
@@ -47,6 +64,13 @@ export class AuthService {
     return user;
   }
 
+  /**
+   * Change the password of a user
+   * @param email 
+   * @param password 
+   * @param newPassword 
+   * @returns 
+   */
   async changePassword(
     email: string,
     password: string,
@@ -65,6 +89,12 @@ export class AuthService {
     return resultUpdate;
   }
 
+  /**
+   * Send a confirmation email to a user
+   * @param user 
+   * @param password 
+   * @returns 
+   */
   async sendConfirmationEmail(user: User,password:string) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -97,6 +127,11 @@ export class AuthService {
     } 
   }
 
+  /**
+   * Confirm the account of a user with a token 
+   * @param token 
+   * @returns 
+   */
   async confirmAcount(token:string){
     let email=null;
     try{

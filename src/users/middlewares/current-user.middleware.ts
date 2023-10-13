@@ -11,6 +11,9 @@ declare global {
     }
 }
 
+/**
+ * Middleware to get the current user info in the cookie session
+ */
 @Injectable()
 export class CurrentUserMiddleware implements NestMiddleware{
     constructor(

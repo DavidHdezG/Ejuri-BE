@@ -29,6 +29,14 @@ export class ClientService {
   public findOne(id: string): Promise<Client> {
     return this.repository.findOneBy({ id: id });
   }
+
+  /**
+   * Create a client in the database if exist in the drive
+   * @param id 
+   * @param category 
+   * @param name 
+   * @returns Client
+   */
   public async synchronize(id:string,category:Category,name:string): Promise<Client> {
     const folder : CreateClientDto = {
       id: id,
@@ -38,7 +46,12 @@ export class ClientService {
     client.category = category;
     return await this.repository.save(client);
   }
-  // * MANDAR EL ID DE LA CATEGORIA AL CREAR EL CLIENTE, de lo contrario = CRASH
+
+  /**
+   * Create a client in the drive and in the database if client doesn't exist
+   * @param createClientDto 
+   * @returns Client
+   */
   public async create(createClientDto: CreateClientDto): Promise<Client> {
     const folderName:string= createClientDto.name;
     const parentFolderId :string= createClientDto.id;

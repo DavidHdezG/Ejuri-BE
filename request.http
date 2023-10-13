@@ -1,5 +1,5 @@
 ### List all documents
-GET http://ec2-3-145-169-99.us-east-2.compute.amazonaws.com/documents
+GET http://ec2-3-145-169-99.us-east-2.compute.amazonaws.com/client
 
 
 
@@ -14,7 +14,7 @@ Content-Type: application/json
     "role": "admin"
 }
 ### Sign in a user
-POST http://localhost:3001/users/signin
+POST http://18.221.113.108/users/signin
 Content-Type: application/json
 
 {
@@ -33,7 +33,7 @@ Content-Type: application/json
 }
 
 ### Get current user
-GET http://localhost:3001/users/user
+GET http://localhost:3001/category
 ### Get all users
 GET http://ec2-3-145-169-99.us-east-2.compute.amazonaws.com/users
 
@@ -49,3 +49,27 @@ Content-Type: application/json
     "password": "123",
     "newPassword": "1234"
 }
+### Create client
+POST http://localhost:3001/client/
+Content-Type: application/json
+
+{
+    "id":"1sKiICo8I1EYtemfP8vcAII06-myyiJ6x",
+    "name":"Testing"
+}
+
+### Create QRHistoric
+POST http://localhost:3001/qrhistoric/
+Content-Type: application/json
+
+{
+
+    "folio":"Asd",
+    "comments":"a",
+    "qr":"test",
+    "client":"1C8mI8vRZXlr6mN9CTtc-V1SH4km9iMcF",
+    "document":"F4",
+    "category":4,
+    "user":42
+}
+

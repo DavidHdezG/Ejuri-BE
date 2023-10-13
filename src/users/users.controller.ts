@@ -38,6 +38,10 @@ export class UsersController {
     private readonly jwtService: JwtService,
     private readonly authService: AuthService,
   ) {}
+
+/*   
+
+   
   @ApiResponse({ status: 200, description: 'Usuario creado y sesión iniciada' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @UseInterceptors(ClassSerializerInterceptor)
@@ -50,8 +54,13 @@ export class UsersController {
     const user = await this.authService.signup(createUserDto);
     session.userId = user.id;
     return user;
-  }
+  } */
 
+  /**
+   * Register a new user, encrypt the password and send a confirmation email (only admin)
+   * @param createUserDto 
+   * @returns 
+   */
   @ApiResponse({ status: 200, description: 'Usuario creado' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @UseInterceptors(ClassSerializerInterceptor)
@@ -65,6 +74,12 @@ export class UsersController {
     return user;
   }
 
+  /**
+   * Sign in a user
+   * @param user 
+   * @param password 
+   * @returns 
+   */
   @ApiResponse({ status: 200, description: 'Sesión iniciada' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
@@ -95,6 +110,10 @@ export class UsersController {
     return user;
   }
 
+  /**
+   * Sign out a user
+   * @param session 
+   */
   @ApiResponse({ status: 200, description: 'Sesión cerrada' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @Post('signout')
@@ -103,6 +122,11 @@ export class UsersController {
     session.userId = null;
   }
 
+  /**
+   * Confirm the account of a user with the token sent by email
+   * @param token
+   * @returns 
+   */
   @ApiResponse({ status: 200, description: 'Cuenta confirmada' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @ApiResponse({ status: 400, description: 'Error al autentificar' })
@@ -116,6 +140,11 @@ export class UsersController {
     return user;
   }
 
+  /**
+   * Get the current user
+   * @param user 
+   * @returns 
+   */
   @ApiResponse({ status: 200, description: 'Usuario actual' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @UseGuards(AuthGuard)
@@ -124,6 +153,10 @@ export class UsersController {
     return user;
   }
 
+  /**
+   * 
+   * @returns All users
+   */
   @ApiResponse({ status: 200, description: 'Usuarios encontrados' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @UseGuards(AuthGuard)
@@ -134,6 +167,10 @@ export class UsersController {
     return await this.usersService.findAll();
   }
 
+  /**
+   * 
+   * @returns All users deleted
+   */
   @ApiResponse({ status: 200, description: 'Usuarios eliminados encontrados' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @UseGuards(AuthGuard)
@@ -144,6 +181,11 @@ export class UsersController {
     return await this.usersService.findDeleted();
   }
 
+  /** 
+   * Return a user by id
+   * @param id
+   * @returns User
+   */
   @ApiResponse({ status: 200, description: 'Usuario encontrado' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
@@ -159,6 +201,13 @@ export class UsersController {
     return user;
   }
 
+  /**
+   * Change the password of a user
+   * @param user 
+   * @param password 
+   * @param newPassword 
+   * @returns 
+   */
   @ApiResponse({ status: 200, description: 'Contraseña cambiada' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
@@ -180,6 +229,11 @@ export class UsersController {
     );
   }
 
+  /**
+   * Delete a user
+   * @param id
+   * @returns User
+   */
   @ApiResponse({ status: 200, description: 'Usuario eliminado' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
@@ -195,6 +249,12 @@ export class UsersController {
     return user;
   }
 
+  /**
+   * Update a user
+   * @param id 
+   * @param updateUserDto 
+   * @returns 
+   */
   @ApiResponse({ status: 200, description: 'Usuario actualizado' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })

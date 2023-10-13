@@ -27,6 +27,9 @@ const drive = google.drive({
   auth: oauth2Client,
 });
 
+/**
+ * Represents the structure of QR data for files.
+ */
 interface FinalData {
   category: number;
   name: string;
@@ -36,6 +39,11 @@ interface FinalData {
   useComments: boolean;
   date: string;
 }
+
+/**
+ *  Service to interact with Google Drive API
+ * 
+ */
 
 @Injectable()
 export class DriveService {
@@ -52,6 +60,10 @@ export class DriveService {
     private clientService: ClientService,
   ) {}
 
+  /**
+   * Downloads all files from the drive folder and sends them to the trash only in Google Drive.
+   * @returns Promise<void>
+   */
   async downloadAllFiles(): Promise<void> {
     const files = await this.readDriveFolder();
     const rutaCarpeta = `${__dirname}/temp/`;
@@ -72,7 +84,14 @@ export class DriveService {
     await Promise.all(downloadPromises);
     return;
   }
-  // Subir los archivos a las carpetas correspondientes
+
+  /**
+   * Uploads a file to a folder in Google Drive.
+   * @param fileName Name of the file to upload.
+   * @param filePath Path of the file to upload.
+   * @param folderId Id of the folder where the file will be uploaded.
+   * @returns Id of the uploaded file.
+   */
   async uploadFile(
     fileName: string,
     filePath: string,
@@ -95,6 +114,11 @@ export class DriveService {
     });
     return respuesta.data.id;
   }
+
+  /**
+   * 
+   * @returns List of files in the drive folder.
+   */
   async readDriveFolder(): Promise<any> {
     try {
       const response = await drive.files.list({
@@ -106,6 +130,13 @@ export class DriveService {
       console.log(error.message);
     }
   }
+
+  /**
+   * Downloads a file from Google Drive.
+   * @param fileId Id of the file to download.
+   * @param destinationPath Path where the file will be downloaded.
+   * @returns Promise<void>
+   */
   async downloadFile(fileId: string, destinationPath: string): Promise<void> {
     try {
       const response = await drive.files.get(
@@ -129,6 +160,11 @@ export class DriveService {
     }
   }
 
+  /**
+   * Extracts the first page of a PDF file.
+   * @param inputPath Path of the file to extract the page.
+   * @returns Path of the file with the extracted page (QR).
+   */
   async extractFirstPage(inputPath: string) {
     const inputData = fs.readFileSync(inputPath);
     const pdfDoc = await PDFDocument.load(inputData);
@@ -139,6 +175,11 @@ export class DriveService {
     return inputPath;
   }
 
+  /**
+   * Extracts the QR from a PDF file.
+   * @param inputPath Path of the file to extract the QR.
+   * @returns Path of the png with the extracted page.
+   */
   async extractQR(inputPath: string) {
     const qrPNG = await pdfToPng(inputPath, {
       outputFolder: __dirname + '/temp/',
@@ -147,6 +188,11 @@ export class DriveService {
     return qrPNG;
   }
 
+  /**
+   * Reads the QR code from a png file.
+   * @param inputPath Path of the file to read the QR.
+   * @returns The data of the QR.
+   */
   async readQR(inputPath: string): Promise<string> {
     const imagen = await jimp.read(inputPath);
     const { data } = imagen.bitmap;
@@ -158,7 +204,11 @@ export class DriveService {
     return code ? code.data : null;
   }
 
-  // Lee la carpeta local y procesa los archivos uno a uno
+
+  /**
+   * Reads the temp folder, process each file and uploads them to the corresponding folder in Google Drive.
+   * @returns Promise<void>
+   */
   async readTempFolder(): Promise<void> {
     try {
       console.log('Archivos locales');
@@ -225,6 +275,12 @@ export class DriveService {
     }
   }
 
+  /**
+   * Creates a folder in Google Drive.
+   * @param folderName Name of the folder to create.
+   * @param parentFolderId Id of the parent folder.
+   * @returns Id of the created folder.
+   */
   async createFolder(
     folderName: string,
     parentFolderId: string,
@@ -243,6 +299,11 @@ export class DriveService {
     return folder.data.id;
   }
 
+  /**
+   * Sends a file to the trash in Google Drive.
+   * @param fileId Id of the file to send to the trash.
+   * @returns Promise<void>
+   */
   async sendFileToTrash(fileId: string): Promise<void> {
     try {
       await drive.files.update({
@@ -261,6 +322,10 @@ export class DriveService {
     }
   }
 
+  /**
+   * Synchronizes the drive folders with the database.
+   * @returns Promise<void>
+   */
   async syncDriveFolders(): Promise<void> {
     try {
       console.log('Sincronizando carpetas...');
@@ -309,6 +374,10 @@ export class DriveService {
     }
   }
 
+
+  /**
+   * Moves all files from the temp folder to the error folder.
+   */
   cleanTempFolder():void {
     const temp = `${__dirname}/temp/`;
     const error = `${__dirname}/error/`;

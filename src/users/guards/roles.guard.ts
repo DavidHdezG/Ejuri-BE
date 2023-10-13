@@ -5,6 +5,10 @@ import { User } from '../entities/user.entity';
 import { Observable } from 'rxjs';
 import { RolesService } from '../roles/roles.service';
 import { UsersService } from '../users.service';
+
+/**
+ * Guard to check if the user has the role needed to access to the endpoint
+ */
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector, private rolesService:RolesService, private userService:UsersService) {}
