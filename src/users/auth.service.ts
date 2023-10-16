@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -28,7 +29,6 @@ export class AuthService {
    * @returns 
    */
   async signup(createUserDto: CreateUserDto): Promise<User> {
-    console.log(createUserDto)
     const users = await this.usersService.findOne(createUserDto.email);
     if (users) {
       throw new BadRequestException('email in use');
@@ -120,10 +120,9 @@ export class AuthService {
   }
     try {
       const info = await transporter.sendMail(mailDetails)
-      console.log(info)
       return user;
     } catch (error) {
-      console.log(error);
+      Logger.error(error,'AuthService - sendConfirmationEmail')
     } 
   }
 
@@ -149,7 +148,7 @@ export class AuthService {
       Object.assign(user,{status: Status.CONFIRMADO})
       return await this.usersService.update(user.id,user);
     }catch(e){
-      console.log(e)
+      Logger.error(e,'AuthService - confirmAccount')
     }
 
 

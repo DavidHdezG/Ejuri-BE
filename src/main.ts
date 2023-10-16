@@ -1,8 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common'; /* 
-import * as cookieParser from 'cookie-parser'; */
+import { Logger, ValidationPipe } from '@nestjs/common'; 
 import cookieSession from 'cookie-session';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
@@ -32,9 +31,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, configSwagger);
   SwaggerModule.setup('docs', app, document);
   await app.listen(port, () => {
-    console.log(
-      `Server is running on url `,
-      `http://localhost:${port} + frontend: ${process.env.FRONTEND_URL}`,
+    Logger.log(
+      `Server is running on url http://localhost:${port} + frontend: ${process.env.FRONTEND_URL}`, 'Main'
     );
   });
 }

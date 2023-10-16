@@ -1,4 +1,4 @@
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import jimp from 'jimp';
 import jsqr from 'jsqr';
 import { PDFDocument } from 'pdf-lib';
@@ -127,7 +127,7 @@ export class DriveService {
       });
       return response.data.files;
     } catch (error) {
-      console.log(error.message);
+      Logger.error(error.message, 'DriveService');
     }
   }
 
@@ -149,14 +149,14 @@ export class DriveService {
       const writeStream = fs.createWriteStream(destinationPath);
       response.data
         .on('end', () => {
-          console.log('Archivo descargado con éxito.');
+          Logger.debug('Archivo descargado con éxito.', 'DriveService');
         })
         .on('error', (err: any) => {
-          console.error('Error al descargar el archivo:', err);
+          Logger.error('Error al descargar el archivo: '.concat(err),'Driver Service - Download File' );
         })
         .pipe(writeStream);
     } catch (error) {
-      console.error('Error al obtener el archivo:', error);
+      Logger.error('Error al obtener el archivo: '.concat(error),'Driver Service - Download File' );
     }
   }
 
@@ -211,12 +211,12 @@ export class DriveService {
    */
   async readTempFolder(): Promise<void> {
     try {
-      console.log('Archivos locales');
+      Logger.debug('Archivos locales', 'DriveService - readTempFolder');
       let fileIdDrive = '';
       const rutaCarpeta = `${__dirname}/temp/`;
       const files = fs.readdirSync(rutaCarpeta, { recursive: false });
       if (files.length === 0) {
-        console.log('No hay archivos en la carpeta');
+        Logger.log('No hay archivos en la carpeta', 'DriveService - readTempFolder');
         return;
       }
       for (const item in files) {
@@ -243,8 +243,8 @@ export class DriveService {
           fileName = fileName.concat(` ${finalData.date}`);
 
           // * Se sube también a la carpeta de buró general
-          if (finalData.category === 4) {
-            fileIdDrive = await this.uploadFile(fileName, inputPath, this.buro);
+          if (finalData.category === 4 || document.type === 'Carta Buró') {
+            fileIdDrive = await this.uploadFile('Copia de '.concat(fileName), inputPath, this.buro);
           }
 
           fileIdDrive = await this.uploadFile(
@@ -254,7 +254,7 @@ export class DriveService {
           );
           
         } else {
-          console.log('no qr item: ' + item);
+          Logger.error('no qr item: '.concat(item),'Driver Service - readTempFolder' );
           fileIdDrive = await this.uploadFile(
             files[item].toString().split('.pdf')[0],
             inputPath,
@@ -264,14 +264,14 @@ export class DriveService {
           await new Promise((resolve) => setTimeout(resolve, 5000));
         }
 
-        console.log(fileIdDrive);
+        /* console.log(fileIdDrive); */
 
-        // Se borran los archivos temporales locales creados
+        // Delete the file from the temp folder
         fs.unlinkSync(inputPath);
         fs.unlinkSync(fileData[0].path);
       }
     } catch (error) {
-      console.log(error.message);
+      Logger.error(error.message, 'DriveService - readTempFolder');
     }
   }
 
@@ -312,13 +312,9 @@ export class DriveService {
           trashed: true,
         },
       });
-
-      console.log('Archivo movido a la papelera de reciclaje con éxito.');
+/*       console.log('Archivo movido a la papelera de reciclaje con éxito.'); */
     } catch (error) {
-      console.error(
-        'Error al mover el archivo a la papelera de reciclaje:',
-        error,
-      );
+      Logger.error(error.message, 'DriveService - sendFileToTrash');
     }
   }
 
@@ -328,7 +324,7 @@ export class DriveService {
    */
   async syncDriveFolders(): Promise<void> {
     try {
-      console.log('Sincronizando carpetas...');
+      Logger.debug('Sincronizando carpetas...', 'DriveService - syncDriveFolders');
       let n = 0;
       const categories = await this.categoryService.findAll();
       for (const category of categories) {
@@ -357,7 +353,7 @@ export class DriveService {
                 temp.category,
                 temp.name,
               );
-              console.log(client);
+/*               console.log(client); */
               n++;
             }
             objList.push(temp);
@@ -367,10 +363,10 @@ export class DriveService {
 
       }
       if (n === 0) {
-        console.log('No hay carpetas nuevas en el drive');
+        Logger.log('No hay carpetas nuevas', 'DriveService - syncDriveFolders');
       }
     } catch (error) {
-      console.log(error.message);
+      Logger.error(error.message, 'DriveService - syncDriveFolders');
     }
   }
 
@@ -386,7 +382,7 @@ export class DriveService {
     }
     fs.readdir(temp,(err,files)=>{
       if(err){
-        console.log(err)
+        Logger.error(err.message, 'DriveService - cleanTempFolder')
       }
       files.forEach(file=>{
         const sourcePath=path.join(temp,file)
@@ -394,9 +390,9 @@ export class DriveService {
   
         fs.rename(sourcePath,destPath,err=>{
           if(err){
-            console.log(err)
+            Logger.error(err.message, 'DriveService - cleanTempFolder')
           }
-          console.log(`Archivo ${file} movido a ${destPath}`)
+          Logger.log(`Archivo ${file} movido a ${destPath}`, 'DriveService - cleanTempFolder')
         })
       })
     })

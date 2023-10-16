@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { DriveService } from '../drive/drive.service';
 import { randomInt } from 'crypto';
@@ -6,23 +6,30 @@ import { randomInt } from 'crypto';
 export class CronjobsService {
   constructor(private readonly driveService: DriveService) {}
 
-  /* @Cron(CronExpression.EVERY_5_MINUTES)
+  /**
+   * Cron job to read the temp folder and move the files to the correct folder in Google Drive
+   */
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async readFolder() {
 
     this.driveService
       .downloadAllFiles()
       .then(async () => {
-        console.log('Descarga completa. Ejecutando readTempFolder()...');
+        Logger.debug('Descarga completa de archivos. Ejecutando ordenamiento...', 'CronjobsService');
         await new Promise(resolve => setTimeout(resolve, 5000))
         return this.driveService.readTempFolder();
       })
       .then(() => {
-        console.log('readTempFolder() completada.');
+        Logger.debug('Ordenamiento terminado', 'CronjobsService');
       })
       .catch((error) => {
-        console.error('Error:', error);
+        Logger.error(error, 'CronjobsService');
       });
   }
+
+  /**
+   * Cron job to sync the folders in Google Drive with the database
+   */
   @Cron(CronExpression.EVERY_MINUTE)
   async syncDriveFolders() {
     try {
@@ -30,5 +37,5 @@ export class CronjobsService {
     } catch (error) {
       console.error(error);
     }
-  } */
+  }
 }

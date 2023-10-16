@@ -29,7 +29,6 @@ export class RolesGuard implements CanActivate {
     
     const userId = request.currentUser.id;
     const user = await this.userService.findOneById(userId);
-    console.log(user)
     /* const userRoles = user.roles; */
     if(user.roles.id===10){
         return true;
