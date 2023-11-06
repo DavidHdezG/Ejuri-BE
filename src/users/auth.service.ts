@@ -108,7 +108,7 @@ export class AuthService {
     });
 
     const token = jwt.sign({email:user.email},process.env.JWT_SECRET)
-    const urlConfirm = `http://localhost:3000/confirmAccount/${token}`;
+    const urlConfirm = `${process.env.FRONTEND_URL}/confirmAccount/${token}`;
     const mailDetails = {
       from: "Ejuri <dhernandez@blucapital.mx>", // sender address
       to: user.email, // receiver email
