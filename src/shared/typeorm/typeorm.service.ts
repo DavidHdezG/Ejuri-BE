@@ -9,7 +9,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory{
 
     public createTypeOrmOptions(): TypeOrmModuleOptions{
         return {
-            
+            autoLoadEntities: true,
             type: "postgres",
             host: process.env.DATABASE_HOST,
             port: 5432,
@@ -20,7 +20,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory{
             migrations: ['dist/migrations/*.{ts,js}'],
             migrationsTableName: 'typeorm_migrations',
             logger: 'file',
-            synchronize: false,
+            synchronize: !!process.env.DATABASE_SYNCHRONIZE,
            
         };
     }

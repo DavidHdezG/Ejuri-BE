@@ -73,16 +73,36 @@ export class DriveService {
     }
     this.cleanTempFolder();
     const downloadPromises = files.map(async (item) => {
-      const nombreArchivoDestino = item.name; // Cambia el nombre según lo que necesites
+      const nombreArchivoDestino = item.name; 
       const rutaCompletaArchivoDestino = `${__dirname}/temp/${nombreArchivoDestino}`;
 
       await this.downloadFile(item.id, rutaCompletaArchivoDestino);
-      await this.sendFileToTrash(item.id);
+      /* await this.sendFileToTrash(item.id); */ //No siempre funciona
+      await this.moveFile(item.id);
     });
 
     // Esperar a que se completen todas las descargas y envíos a la papelera de reciclaje
     await Promise.all(downloadPromises);
     return;
+  }
+
+  /**
+   * Moves a file from one folder to another in Google Drive.
+   * @param fileId Id of the file to move.
+   */
+  async moveFile(fileId:string):Promise<void> {
+    const newFolderId = "1enIy8cOLVz59jZLNvKMadLNwfY3UpzvT";
+    try {
+      await drive.files.update({
+        fileId: fileId,
+        addParents: newFolderId,
+        removeParents: this.toMoveFolderId,
+      });
+
+      Logger.debug('Archivo movido en Drive', 'DriveService - moveFile');
+    } catch (error) {
+      Logger.error(error.message, 'DriveService - moveFile');
+    }
   }
 
   /**

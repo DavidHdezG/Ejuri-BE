@@ -9,7 +9,7 @@ export class CronjobsService {
   /**
    * Cron job to read the temp folder and move the files to the correct folder in Google Drive
    */
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  /* @Cron(CronExpression.EVERY_5_MINUTES)
   async readFolder() {
 
     this.driveService
@@ -25,17 +25,17 @@ export class CronjobsService {
       .catch((error) => {
         Logger.error(error, 'CronjobsService');
       });
-  }
+  } */
 
   /**
    * Cron job to sync the folders in Google Drive with the database
    */
-  @Cron(CronExpression.EVERY_MINUTE)
+  /* @Cron(CronExpression.EVERY_MINUTE)
   async syncDriveFolders() {
     try {
       await this.driveService.syncDriveFolders();
     } catch (error) {
       console.error(error);
     }
-  }
+  } */
 }

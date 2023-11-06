@@ -10,6 +10,11 @@ import { ApiModule } from './api/api.module';
 import { CronjobsModule } from './cronjobs/cronjobs.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DriveModule } from './drive/drive.module';
+import { AnnexGenerationService } from './annex-generation/annex-generation.service';
+import { AnnexGenerationModule } from './annex-generation/annex-generation.module';
+import { AnnexModule } from './api/pld/annex/annex.module';
+import { AnnexCellModule } from './api/pld/annex-cell/annex-cell.module';
+import { CellModule } from './api/pld/cell/cell.module';
 
 const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
 @Module({
@@ -21,8 +26,12 @@ const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
     ApiModule,
     CronjobsModule,
     DriveModule,
+    AnnexGenerationModule,
+    AnnexModule,
+    AnnexCellModule,
+    CellModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AnnexGenerationService],
 })
 export class AppModule {}

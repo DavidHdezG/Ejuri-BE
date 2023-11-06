@@ -36,6 +36,7 @@ lerna-debug.log*
 
 
 *.env
+*.xlsx
 .vercel
 request.http
 dist.zip
