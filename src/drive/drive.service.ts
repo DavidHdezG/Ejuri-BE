@@ -244,7 +244,8 @@ export class DriveService {
 
           // * Se sube también a la carpeta de buró general
           if (finalData.category === 4 || document.type === 'Carta Buró') {
-            fileIdDrive = await this.uploadFile('Copia de '.concat(fileName), inputPath, this.buro);
+            const buroFileName=`Copia de ${finalData.folio}`;
+            fileIdDrive = await this.uploadFile(buroFileName, inputPath, this.buro);
           }
 
           fileIdDrive = await this.uploadFile(
