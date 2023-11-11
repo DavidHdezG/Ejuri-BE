@@ -10,14 +10,54 @@ export class AnnexGenerationService {
   ) {}
 
   async generateAnnex() {
-    const annex = await this.annexService.findOne(1);
+    let personName = []
+    for (let index = 1; index < 20; index++) {
+      const annex = await this.annexService.findOne(index);
+      let list = JSON.stringify(annex.annexCell, null, 2);
+      let dlist = JSON.parse(list);
+      const file = await this.loadExcelFile(__dirname + '/Libro1.xlsx');
+      let workbook = new ExcelJS.Workbook();
+      if(personName.length!=0){       
+        workbook = await workbook.xlsx.readFile(`${__dirname}/${personName[0]}.xlsx`);
+      }else{
+        workbook = await workbook.xlsx.readFile(__dirname + '/new.xlsx');
+      }
+      let worksheet:ExcelJS.Worksheet= workbook.getWorksheet(annex.name);
+      console.log(annex.name);
+      // Un ciclo por cada persona
+      for (const row of file) {
+        let name =
+          row['Nombre(s)'] +
+          ' ' +
+          row['Apellido paterno'] +
+          ' ' +
+          row['Apellido Materno'];
+        personName.push(name)
+        for (const item of dlist) {
+          if (row[item.cell.name]) {
+            worksheet.getCell(item.cell.cell).value = row[item.cell.name];
+          } else {
+            console.log("No existen las columnas");
+            console.log(item.cell.name)
+          }
+        }
+        const date = new Date(row['Fecha de Nacimiento (dd/mm/aaaa)']);
+        const dia = date.getDate().toString().padStart(2, '0');
+        const mes = (date.getMonth() + 1).toString().padStart(2, '0'); // Nota: en JavaScript, los meses van de 0 a 11
+        const año = date.getFullYear();
+        console.log(`${dia}/${mes}/${año}`);
+        await workbook.xlsx.writeFile(__dirname+'/'+name + '.xlsx');
+      }
+      
+    }
+/*     const annex = await this.annexService.findOne(4);
     let list = JSON.stringify(annex.annexCell, null, 2);
     let dlist = JSON.parse(list);
     const file = await this.loadExcelFile(__dirname + '/Libro1.xlsx');
     var workbook = new ExcelJS.Workbook();
     workbook = await workbook.xlsx.readFile(__dirname + '/new.xlsx');
-    var worksheet = workbook.getWorksheet('ANEXO VIII FINAL');
-    console.log(worksheet.name);
+    var worksheet = workbook.getWorksheet(annex.name);
+    console.log(annex.name);
     // Un ciclo por cada persona
     for (const row of file) {
       let name =
@@ -28,13 +68,10 @@ export class AnnexGenerationService {
         row['Apellido Materno'];
       for (const item of dlist) {
         if (row[item.cell.name]) {
-          /* console.log(item.cell.cell);
-            console.log(item.cell.name)
-            console.log(row[item.cell.name])
-            console.log('----') */
           worksheet.getCell(item.cell.cell).value = row[item.cell.name];
         } else {
-          console.log(row['Fecha de Nacimiento (dd/mm/aaaa)']);
+          console.log("No existen las columnas");
+          console.log(item.cell.name)
         }
       }
       const date = new Date(row['Fecha de Nacimiento (dd/mm/aaaa)']);
@@ -43,7 +80,7 @@ export class AnnexGenerationService {
       const año = date.getFullYear();
       console.log(`${dia}/${mes}/${año}`);
       await workbook.xlsx.writeFile(name + '.xlsx');
-    }
+    } */
     /* if(item.cell.name == row['Nombre(s)']){
           console.log(row['Nombre(s)']);
         } */

@@ -95,8 +95,8 @@ export class DriveService {
     try {
       await drive.files.update({
         fileId: fileId,
-        addParents: newFolderId,
         removeParents: this.toMoveFolderId,
+        addParents: newFolderId,
       });
 
       Logger.debug('Archivo movido en Drive', 'DriveService - moveFile');
@@ -260,7 +260,6 @@ export class DriveService {
           if (finalData.useComments) {
             fileName = fileName.concat(` ${finalData.comments}`);
           }
-          fileName = fileName.concat(` ${finalData.date}`);
 
           // * Se sube también a la carpeta de buró general
           if (finalData.category === 4 || document.type === 'Carta Buró') {
