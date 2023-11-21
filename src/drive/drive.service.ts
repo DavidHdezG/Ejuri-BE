@@ -260,7 +260,13 @@ export class DriveService {
           const document = await this.documentService.findOne(
             finalData.document,
           );
-          fileName = `${finalData.folio} ${document.type}`;
+
+          if(document.type != 'Otro'){
+            fileName = `${finalData.folio} ${document.type}`;
+          }else{
+            fileName = `${finalData.folio}`;
+          }
+
           if (finalData.useComments) {
             fileName = fileName.concat(` ${finalData.comments}`);
           }

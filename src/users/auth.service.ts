@@ -103,7 +103,7 @@ export class AuthService {
       secure: false,
       auth: {
         user: 'dhernandez@blucapital.mx',
-        pass: 'klloxegascwifmmx',
+        pass: 'hvllydpiovikvwex',
       },
     });
 
