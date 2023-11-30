@@ -42,7 +42,7 @@ interface FinalData {
 
 /**
  *  Service to interact with Google Drive API
- * 
+ *
  */
 
 @Injectable()
@@ -77,7 +77,6 @@ export class DriveService {
       const rutaCompletaArchivoDestino = `${__dirname}/temp/${nombreArchivoDestino}`;
 
       await this.downloadFile(item.id, rutaCompletaArchivoDestino);
-      /* await this.sendFileToTrash(item.id); */ //No siempre funciona
       await this.moveFile(item.id);
     });
 
@@ -136,7 +135,7 @@ export class DriveService {
   }
 
   /**
-   * 
+   *
    * @returns List of files in the drive folder.
    */
   async readDriveFolder(): Promise<any> {
@@ -172,11 +171,17 @@ export class DriveService {
           Logger.debug('Archivo descargado con éxito.', 'DriveService');
         })
         .on('error', (err: any) => {
-          Logger.error('Error al descargar el archivo: '.concat(err),'Driver Service - Download File' );
+          Logger.error(
+            'Error al descargar el archivo: '.concat(err),
+            'Driver Service - Download File',
+          );
         })
         .pipe(writeStream);
     } catch (error) {
-      Logger.error('Error al obtener el archivo: '.concat(error),'Driver Service - Download File' );
+      Logger.error(
+        'Error al obtener el archivo: '.concat(error),
+        'Driver Service - Download File',
+      );
     }
   }
 
@@ -224,7 +229,6 @@ export class DriveService {
     return code ? code.data : null;
   }
 
-
   /**
    * Reads the temp folder, process each file and uploads them to the corresponding folder in Google Drive.
    * @returns Promise<void>
@@ -236,7 +240,10 @@ export class DriveService {
       const rutaCarpeta = `${__dirname}/temp/`;
       const files = fs.readdirSync(rutaCarpeta, { recursive: false });
       if (files.length === 0) {
-        Logger.log('No hay archivos en la carpeta', 'DriveService - readTempFolder');
+        Logger.log(
+          'No hay archivos en la carpeta',
+          'DriveService - readTempFolder',
+        );
         return;
       }
       for (const item in files) {
@@ -256,14 +263,25 @@ export class DriveService {
           const document = await this.documentService.findOne(
             finalData.document,
           );
-          fileName = `${finalData.folio} ${document.type}`;
+
+          if(document.type != 'Otro'){
+            fileName = `${finalData.folio} ${document.type}`;
+          }else{
+            fileName = `${finalData.folio}`;
+          }
+
           if (finalData.useComments) {
             fileName = fileName.concat(` ${finalData.comments}`);
           }
 
           // * Se sube también a la carpeta de buró general
           if (finalData.category === 4 || document.type === 'Carta Buró') {
-            fileIdDrive = await this.uploadFile('Copia de '.concat(fileName), inputPath, this.buro);
+            const buroFileName = `Copia de ${finalData.folio}`;
+            fileIdDrive = await this.uploadFile(
+              buroFileName,
+              inputPath,
+              this.buro,
+            );
           }
 
           fileIdDrive = await this.uploadFile(
@@ -271,9 +289,11 @@ export class DriveService {
             inputPath,
             finalData.name,
           );
-          
         } else {
-          Logger.error('no qr item: '.concat(item),'Driver Service - readTempFolder' );
+          Logger.error(
+            'no qr item: '.concat(item),
+            'Driver Service - readTempFolder',
+          );
           fileIdDrive = await this.uploadFile(
             files[item].toString().split('.pdf')[0],
             inputPath,
@@ -331,7 +351,7 @@ export class DriveService {
           trashed: true,
         },
       });
-/*       console.log('Archivo movido a la papelera de reciclaje con éxito.'); */
+      /*       console.log('Archivo movido a la papelera de reciclaje con éxito.'); */
     } catch (error) {
       Logger.error(error.message, 'DriveService - sendFileToTrash');
     }
@@ -343,7 +363,10 @@ export class DriveService {
    */
   async syncDriveFolders(): Promise<void> {
     try {
-      Logger.debug('Sincronizando carpetas...', 'DriveService - syncDriveFolders');
+      Logger.debug(
+        'Sincronizando carpetas...',
+        'DriveService - syncDriveFolders',
+      );
       let n = 0;
       const categories = await this.categoryService.findAll();
       for (const category of categories) {
@@ -372,14 +395,13 @@ export class DriveService {
                 temp.category,
                 temp.name,
               );
-/*               console.log(client); */
+              /*               console.log(client); */
               n++;
             }
             objList.push(temp);
           }
           nextPageToken = response.data.nextPageToken;
         } while (nextPageToken);
-
       }
       if (n === 0) {
         Logger.log('No hay carpetas nuevas', 'DriveService - syncDriveFolders');
@@ -389,31 +411,33 @@ export class DriveService {
     }
   }
 
-
   /**
    * Moves all files from the temp folder to the error folder.
    */
-  cleanTempFolder():void {
+  cleanTempFolder(): void {
     const temp = `${__dirname}/temp/`;
     const error = `${__dirname}/error/`;
     if (!fs.existsSync(error)) {
       fs.mkdirSync(error, { recursive: true });
     }
-    fs.readdir(temp,(err,files)=>{
-      if(err){
-        Logger.error(err.message, 'DriveService - cleanTempFolder')
+    fs.readdir(temp, (err, files) => {
+      if (err) {
+        Logger.error(err.message, 'DriveService - cleanTempFolder');
       }
-      files.forEach(file=>{
-        const sourcePath=path.join(temp,file)
-        const destPath=path.join(error,file)
-  
-        fs.rename(sourcePath,destPath,err=>{
-          if(err){
-            Logger.error(err.message, 'DriveService - cleanTempFolder')
+      files.forEach((file) => {
+        const sourcePath = path.join(temp, file);
+        const destPath = path.join(error, file);
+
+        fs.rename(sourcePath, destPath, (err) => {
+          if (err) {
+            Logger.error(err.message, 'DriveService - cleanTempFolder');
           }
-          Logger.log(`Archivo ${file} movido a ${destPath}`, 'DriveService - cleanTempFolder')
-        })
-      })
-    })
+          Logger.log(
+            `Archivo ${file} movido a ${destPath}`,
+            'DriveService - cleanTempFolder',
+          );
+        });
+      });
+    });
   }
 }

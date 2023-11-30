@@ -16,7 +16,7 @@ export class CronjobsService {
       .downloadAllFiles()
       .then(async () => {
         Logger.debug('Descarga completa de archivos. Ejecutando ordenamiento...', 'CronjobsService');
-        await new Promise(resolve => setTimeout(resolve, 5000))
+        await new Promise(resolve => setTimeout(resolve, 15000))
         return this.driveService.readTempFolder();
       })
       .then(() => {
