@@ -8,7 +8,7 @@ import { ClientModule } from 'src/api/client/client.module';
 @Module({
   imports: [forwardRef(() => ClientModule),CategoryModule, DocumentsModule],
   providers: [DriveService/* , CategoryService */],
- /*  controllers: [DriveController], */
+  controllers: [DriveController],
   exports: [DriveService],
 })
 export class DriveModule {}

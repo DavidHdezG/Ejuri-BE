@@ -24,7 +24,7 @@ export class DriveController {
 
   @Post('trigger')
   async trigger() {
-    await this.driveService.syncDriveFolders();
+    /* console.log(await this.driveService.uploadExcelFile()); */
   }
 
 }

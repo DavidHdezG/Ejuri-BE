@@ -16,6 +16,7 @@ export class AnnexService {
   async findAll() {
     const list = await this.annexRepository.find({
       relations: ['annexCell', 'annexCell.cell'],
+      where: { available: true },
     });
     return list;
 

@@ -1,62 +1,125 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AnnexCellService } from 'src/api/pld/annex-cell/annex-cell.service';
 import { AnnexService } from 'src/api/pld/annex/annex.service';
 import * as ExcelJS from 'exceljs';
 import fs from 'fs';
+import { DriveService } from 'src/drive/drive.service';
+class GeneratedFileData {
+  private set: Set<any>;
+  constructor() {
+    this.set = new Set<any>();
+  }
+
+  addData(obj: { name: string; path: string }): void {
+    const key = JSON.stringify({ name: obj.name, path: obj.path });
+    if (!this.set.has(key)) {
+      this.set.add(key);
+    }
+  }
+
+  getData(): Array<{ name: string; path: string }> {
+    return Array.from(this.set, (key) => JSON.parse(key));
+  }
+}
 @Injectable()
 export class AnnexGenerationService {
   constructor(
     @Inject(AnnexService) private readonly annexService: AnnexService,
-    @Inject(AnnexCellService) private readonly testService: AnnexCellService,
+    @Inject(DriveService) private readonly driveService: DriveService,
   ) {}
 
-  async generateAnnex(filePath: string) {
-    const filesPath = []
+  /* async generateAnnex(filePath: string, annexData: any) {
+    const filesData = new GeneratedFileData();
     const file = await this.loadExcelFile(filePath);
-
+    const annexList = await this.annexService.findAll();
+    const annexListID = annexList.map((annex) => annex.id);
     for (const row of file) {
       let workbook = new ExcelJS.Workbook();
       let name =
-        row['Nombre(s)'] +
-        ' ' +
-        row['Apellido paterno'] +
-        ' ' +
-        row['Apellido Materno'];
+        row[
+          'Nombre Completo (apellido paterno, materno y nombre(s) sin abreviaturas) o Razón Social'
+        ];
       workbook = await workbook.xlsx.readFile(__dirname + '/new.xlsx');
 
-      for (let index = 1; index < 20; index++) {
-        const annex = await this.annexService.findOne(index);
-        let list = JSON.stringify(annex.annexCell, null, 2);
-        let dlist = JSON.parse(list);
+      if (annexData[name].length == 0) {
+        continue;
+      }
+
+      for (const id of annexListID) {
+        const annex = await this.annexService.findOne(id);
+
         let worksheet: ExcelJS.Worksheet = workbook.getWorksheet(annex.name);
         if (!worksheet) {
           continue;
         }
+        if (!annexData[name].includes(annex.id)) {
+          worksheet.state = 'hidden';
+          continue;
+        }
+        let list = JSON.stringify(annex.annexCell, null, 2);
+        let dlist = JSON.parse(list);
+
         for (const item of dlist) {
           if (row[item.cell.name]) {
+            if (row[item.cell.name] instanceof Date) {
+              worksheet.getCell(item.cell.cell).value =
+                row[item.cell.name].toLocaleDateString();
+              continue;
+            }
+
+            const temp = String(item.cell.cell).split('-');
+
+            if (temp.length == 2) {
+              if (row[item.cell.name] == 'Si') {
+                worksheet.getCell(temp[0]).value = 'X';
+              } else if (row[item.cell.name] == 'No') {
+                worksheet.getCell(temp[1]).value = 'X';
+              }
+              continue;
+            }
+            if (temp.length == 3) {
+              if (row[item.cell.name] == 'Alta') {
+                worksheet.getCell(temp[2]).value = 'X';
+              } else if (row[item.cell.name] == 'Media') {
+                worksheet.getCell(temp[1]).value = 'X';
+              } else if (row[item.cell.name] == 'Baja') {
+                worksheet.getCell(temp[0]).value = 'X';
+              }
+              continue;
+            }
             worksheet.getCell(item.cell.cell).value = row[item.cell.name];
           } else {
-            console.log('No existen las columnas');
-            console.log(item.cell.name);
+            Logger.debug(item.cell.name);
           }
         }
-        const date = new Date(row['Fecha de Nacimiento (dd/mm/aaaa)']);
-        const dia = date.getDate().toString().padStart(2, '0');
-        const mes = (date.getMonth() + 1).toString().padStart(2, '0');
-        const año = date.getFullYear();
-        console.log(`${dia}/${mes}/${año}`);
-        await workbook.xlsx.writeFile(__dirname + '/' + name + '.xlsx');
-        filesPath.push(__dirname + '/' + name + '.xlsx')
+
+        const tempFileData = {
+          name: name + '.xlsx',
+          path: __dirname + '/' + name + '.xlsx',
+        };
+
+        filesData.addData(tempFileData);
       }
+
+      await workbook.xlsx.writeFile(__dirname + '/' + name + '.xlsx');
     }
-    fs.unlink(filePath, (err) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-    });
-    return filesPath
-  }
+    const filesID = [];
+    for (const filePath of filesData.getData()) {
+      const id = await this.driveService.uploadExcelFile(
+        filePath.path,
+        filePath.name,
+      );
+      filesID.push({ id: id, name: filePath.name });
+      fs.unlink(filePath.path, (err) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+      });
+    }
+    
+    return filesID;
+  } */
 
   async loadExcelFile(fileName: string): Promise<any> {
     const workbook = new ExcelJS.Workbook();
@@ -91,5 +154,180 @@ export class AnnexGenerationService {
       .catch(function (error) {
         console.error(error);
       });
+  }
+
+  // TESTING REESCRITURA DEL CODE
+  async generateAnnex(filePath: string, annexData: any) {
+    const filesData = new GeneratedFileData();
+    const file = await this.loadExcelFile(filePath);
+    const annexList = await this.annexService.findAll();
+    const annexListID = this.extractAnnexIDs(annexList);
+
+    for (const row of file) {
+      const workbook = await this.loadWorkbook();
+      const name = this.extractName(row);
+
+      if (this.isAnnexDataEmpty(annexData[name])) {
+        continue;
+      }
+
+      await this.processAnnexes(
+        workbook,
+        name,
+        annexData[name],
+        annexListID,
+        filesData,
+        row,
+      );
+    }
+    const filesID = await this.uploadAndCleanup(filesData);
+    return filesID;
+  }
+
+  private extractAnnexIDs(annexList: any[]): number[] {
+    return annexList.map((annex) => annex.id);
+  }
+
+  private async loadWorkbook(): Promise<ExcelJS.Workbook> {
+    const workbook = new ExcelJS.Workbook();
+    return workbook.xlsx.readFile(__dirname + '/new.xlsx');
+  }
+
+  private extractName(row: any): string {
+    return row[
+      'Nombre Completo (apellido paterno, materno y nombre(s) sin abreviaturas) o Razón Social'
+    ];
+  }
+
+  private isAnnexDataEmpty(annexData: any[]): boolean {
+    return annexData.length == 0;
+  }
+
+  private async processAnnexes(
+    workbook: ExcelJS.Workbook,
+    name: string,
+    annexData: any[],
+    annexListID: number[],
+    filesData: GeneratedFileData,
+    row: any,
+  ): Promise<void> {
+    for (const id of annexListID) {
+      const annex = await this.annexService.findOne(id);
+
+      const worksheet = workbook.getWorksheet(annex.name);
+
+      if (!worksheet) {
+        continue;
+      }
+
+      this.updateWorksheet(worksheet, annexData, row, annex);
+
+      const tempFileData = {
+        name: name + '.xlsx',
+        path: __dirname + '/' + name + '.xlsx',
+      };
+      filesData.addData(tempFileData);
+    }
+    await workbook.xlsx.writeFile(__dirname + '/' + name + '.xlsx');
+  }
+
+  private updateWorksheet(
+    worksheet: ExcelJS.Worksheet,
+    annexData: any[],
+    row: any,
+    annex: any,
+  ): void {
+    if (!annexData.includes(annex.id)) {
+      worksheet.state = 'hidden';
+      return;
+    }
+    const dlist = this.parseAnnexCell(annex.annexCell);
+
+    for (const item of dlist) {
+      if (row[item.cell.name]) {
+        this.updateCell(worksheet, item, row);
+      } else {
+        Logger.debug(item.cell.name);
+      }
+    }
+  }
+
+  private updateCell(worksheet: ExcelJS.Worksheet, item: any, row: any) {
+    if (row[item.cell.name] instanceof Date) {
+      this.updateDateCell(worksheet, item, row);
+    } else {
+      const temp = String(item.cell.cell).split('-');
+
+      if (temp.length == 2) {
+        this.updateYesNoCell(worksheet, item, row, temp);
+      } else if (temp.length == 3) {
+        this.updateLevelCell(worksheet, item, row, temp);
+      } else {
+        this.updateDefaultCell(worksheet, item, row);
+      }
+    }
+  }
+
+  private updateDateCell(worksheet: ExcelJS.Worksheet, item: any, row: any) {
+    worksheet.getCell(item.cell.cell).value =
+      row['Lugar'] +", "+ row[item.cell.name].toLocaleDateString();
+  }
+
+  private updateYesNoCell(
+    worksheet: ExcelJS.Worksheet,
+    item: any,
+    row: any,
+    temp: string[],
+  ) {
+    if (row[item.cell.name] == 'Si') {
+      worksheet.getCell(temp[0]).value = 'X';
+    } else if (row[item.cell.name] == 'No') {
+      worksheet.getCell(temp[1]).value = 'X';
+    }
+  }
+
+  private updateLevelCell(
+    worksheet: ExcelJS.Worksheet,
+    item: any,
+    row: any,
+    temp: string[],
+  ) {
+    if (row[item.cell.name] == 'Alta') {
+      worksheet.getCell(temp[2]).value = 'X';
+    } else if (row[item.cell.name] == 'Media') {
+      worksheet.getCell(temp[1]).value = 'X';
+    } else if (row[item.cell.name] == 'Baja') {
+      worksheet.getCell(temp[0]).value = 'X';
+    }
+  }
+
+  private updateDefaultCell(worksheet: ExcelJS.Worksheet, item: any, row: any) {
+    worksheet.getCell(item.cell.cell).value = row[item.cell.name];
+  }
+  private parseAnnexCell(annexCell: any): any[] {
+    const list = JSON.stringify(annexCell, null, 2);
+    return JSON.parse(list);
+  }
+  private async uploadAndCleanup(filesData: GeneratedFileData): Promise<any[]> {
+    const filesID = [];
+
+    for (const filePath of filesData.getData()) {
+      const id = await this.driveService.uploadExcelFile(
+        filePath.path,
+        filePath.name,
+      );
+      filesID.push({ id: id, name: filePath.name });
+
+      this.unlinkFile(filePath.path);
+    }
+
+    return filesID;
+  }
+  private unlinkFile(filePath: string): void {
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error(err);
+      }
+    });
   }
 }

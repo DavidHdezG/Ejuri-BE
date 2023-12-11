@@ -27,6 +27,8 @@ const drive = google.drive({
   auth: oauth2Client,
 });
 
+const sheets = google.sheets({version: 'v4', auth: oauth2Client});
+
 /**
  * Represents the structure of QR data for files.
  */
@@ -439,5 +441,24 @@ export class DriveService {
         });
       });
     });
+  }
+
+  async uploadExcelFile(filePath:string, fileName:string){
+    const archivoMetadata = {
+      name: fileName,
+      parents: ['13KDHL_BMLMOH3jQwlu1qCm-2x1E2w8Pr'],
+    };
+
+    const archivoMedia = {
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      body: fs.createReadStream(filePath),
+    };
+
+    const respuesta = await drive.files.create({
+      requestBody: archivoMetadata,
+      media: archivoMedia,
+      fields: 'id', // Esto devuelve solo el ID del archivo creado
+    });
+    return respuesta.data.id;
   }
 }

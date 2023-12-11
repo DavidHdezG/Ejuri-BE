@@ -10,8 +10,12 @@ export class Annex {
     @Column()
     public name:string;
 
+    @Column({default: true})
+    public available:boolean;
+
     @OneToMany(()=> AnnexCell, annexCell => annexCell.annex)
     @JoinColumn()
     public annexCell: AnnexCell;
+
     
 }
