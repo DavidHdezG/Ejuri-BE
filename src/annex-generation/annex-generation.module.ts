@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { AnnexGenerationService } from './annex-generation.service';
 import { AnnexGenerationController } from './annex-generation.controller';
-import { AnnexCell } from 'src/api/pld/annex-cell/entities/annex-cell.entity';
 import { AnnexModule } from 'src/api/pld/annex/annex.module';
-import { AnnexCellModule } from 'src/api/pld/annex-cell/annex-cell.module';
-import { DriveService } from 'src/drive/drive.service';
 import { DriveModule } from 'src/drive/drive.module';
+import { RolesModule } from 'src/users/roles/roles.module';
+import { UsersModule } from 'src/users/users.module';
+import { HistoricModule } from 'src/api/pld/historic/historic.module';
 
 @Module({
-    imports: [AnnexModule,DriveModule],
+    imports: [AnnexModule,DriveModule,RolesModule,UsersModule, HistoricModule],
     providers:[AnnexGenerationService],
     controllers: [AnnexGenerationController]
 })

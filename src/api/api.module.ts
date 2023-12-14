@@ -6,8 +6,9 @@ import { CategoryModule } from './category/category.module';
 import { AnnexCellModule } from './pld/annex-cell/annex-cell.module';
 import { AnnexModule } from './pld/annex/annex.module';
 import { CellModule } from './pld/cell/cell.module';
+import { HistoricModule } from './pld/historic/historic.module';
 
 @Module({
-  imports: [ClientModule, QrhistoricModule, DocumentsModule, CategoryModule, AnnexModule, CellModule, AnnexCellModule]
+  imports: [ClientModule, QrhistoricModule, DocumentsModule, CategoryModule, AnnexModule, CellModule, AnnexCellModule, HistoricModule]
 })
 export class ApiModule {}

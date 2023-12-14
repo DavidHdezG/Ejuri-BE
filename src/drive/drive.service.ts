@@ -9,7 +9,6 @@ import { CategoryService } from 'src/api/category/category.service';
 import { DocumentsService } from 'src/api/documents/documents.service';
 import { ClientService } from 'src/api/client/client.service';
 import path from 'path';
-import { promisify } from 'util';
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
@@ -27,7 +26,6 @@ const drive = google.drive({
   auth: oauth2Client,
 });
 
-const sheets = google.sheets({version: 'v4', auth: oauth2Client});
 
 /**
  * Represents the structure of QR data for files.

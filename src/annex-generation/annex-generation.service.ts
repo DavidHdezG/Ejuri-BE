@@ -1,9 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { AnnexCellService } from 'src/api/pld/annex-cell/annex-cell.service';
 import { AnnexService } from 'src/api/pld/annex/annex.service';
 import * as ExcelJS from 'exceljs';
 import fs from 'fs';
 import { DriveService } from 'src/drive/drive.service';
+import { HistoricService } from 'src/api/pld/historic/historic.service';
+import { User } from 'src/users/entities/user.entity';
+import { Historic } from 'src/api/pld/historic/entities/historic.entity';
+import { Annex } from 'src/api/pld/annex/entities/annex.entity';
 class GeneratedFileData {
   private set: Set<any>;
   constructor() {
@@ -26,6 +29,7 @@ export class AnnexGenerationService {
   constructor(
     @Inject(AnnexService) private readonly annexService: AnnexService,
     @Inject(DriveService) private readonly driveService: DriveService,
+    @Inject(HistoricService) private readonly historicService: HistoricService,
   ) {}
 
   /* async generateAnnex(filePath: string, annexData: any) {
@@ -121,6 +125,11 @@ export class AnnexGenerationService {
     return filesID;
   } */
 
+  /**
+   * Loads an Excel file and returns its data
+   * @param fileName  - Name of the Excel file
+   * @returns Promise<any>
+   */
   async loadExcelFile(fileName: string): Promise<any> {
     const workbook = new ExcelJS.Workbook();
     return workbook.xlsx
@@ -157,15 +166,45 @@ export class AnnexGenerationService {
   }
 
   // TESTING REESCRITURA DEL CODE
-  async generateAnnex(filePath: string, annexData: any) {
-    const filesData = new GeneratedFileData();
+  /**
+   * Generates the annexes of all clients in the Excel file
+   * @param filePath  - Path of the Excel file
+   * @param annexData  - Object that contains the annex IDs to be generated {name: string, annex: number[]}
+   * @param user  - User that generated the annexes
+   * @returns  Promise<any[]> - Array of Google Drive IDs
+   */
+  async generateAnnex(filePath: string, annexData: any, user: User) {
+    /**
+     * Object that contains the data of the generated files {name: string, path: string}
+     * @type {GeneratedFileData}
+     */
+    const filesData: GeneratedFileData = new GeneratedFileData();
+    /**
+     * Excel file
+     */
     const file = await this.loadExcelFile(filePath);
-    const annexList = await this.annexService.findAll();
-    const annexListID = this.extractAnnexIDs(annexList);
+    /**
+     * Array of all annexes in the database
+     * @type {Annex[]}
+     */
+    const annexList: Annex[] = await this.annexService.findAll();
+    /**
+     * Array of annex IDs to be generated
+     * @type {number[]} - Integer array
+     */
+    const annexListID: number[] = this.extractAnnexIDs(annexList);
 
     for (const row of file) {
-      const workbook = await this.loadWorkbook();
-      const name = this.extractName(row);
+      /**
+       * Excel workbook
+       * @type {ExcelJS.Workbook}
+       */
+      const workbook: ExcelJS.Workbook = await this.loadWorkbook();
+      /**
+       * Name of the client
+       * @type {string}
+       */
+      const name: string = this.extractName(row);
 
       if (this.isAnnexDataEmpty(annexData[name])) {
         continue;
@@ -181,28 +220,87 @@ export class AnnexGenerationService {
       );
     }
     const filesID = await this.uploadAndCleanup(filesData);
+    for (const row of file) {
+      const name = this.extractName(row);
+      if (this.isAnnexDataEmpty(annexData[name])) {
+        continue;
+      }
+      const driveId = filesID.find((file) => file.name == name + '.xlsx').id;
+      await this.saveAnnexHistoric(name, row['No. de Cliente'], driveId, user);
+    }
     return filesID;
   }
 
+  /**
+   * Saves the generated annexes in the database
+   * @param name - Name of the client
+   * @param clientNumber - Client number
+   * @param driveId - Drive ID of the generated annexes
+   * @param user  - User that generated the annexes
+   * @returns Promise<Historic>
+   */
+  private async saveAnnexHistoric(
+    name: string,
+    clientNumber: string,
+    driveId: string,
+    user: User,
+  ): Promise<Historic> {
+    const res = await this.historicService.create({
+      name: name,
+      clientNumber: clientNumber,
+      driveId: driveId,
+      user: String(user.id),
+    });
+    return res;
+  }
+
+  /**
+   * Extracts the IDs of the annexes
+   * @param annexList - Array of annexes
+   * @returns number[] - Integer array of annex IDs
+   */
   private extractAnnexIDs(annexList: any[]): number[] {
     return annexList.map((annex) => annex.id);
   }
 
+  /**
+   * Loads the Excel workbook from the file
+   * @returns ExcelJS.Workbook
+   */
   private async loadWorkbook(): Promise<ExcelJS.Workbook> {
     const workbook = new ExcelJS.Workbook();
     return workbook.xlsx.readFile(__dirname + '/new.xlsx');
   }
 
+  /**
+   * Extracts the name of the client it's related to
+   * @param row  - Row of the Excel file
+   * @returns  string - Name of the client
+   */
   private extractName(row: any): string {
     return row[
-      'Nombre Completo (apellido paterno, materno y nombre(s) sin abreviaturas) o Razón Social'
+      'Cliente al que está relacionado'
     ];
   }
 
+  /**
+   * Checks if  the client has annexes to be generated
+   * @param annexData - Array of annex IDs
+   * @returns boolean
+   */
   private isAnnexDataEmpty(annexData: any[]): boolean {
     return annexData.length == 0;
   }
 
+  /**
+   * Generates the annexes of a client
+   * @param workbook  - Excel workbook
+   * @param name  - Name of the client
+   * @param annexData  - Array of annex IDs to be generated
+   * @param annexListID  - Array of all annex IDs
+   * @param filesData  - Object that contains the data of the generated files {name: string, path: string}
+   * @param row  - Row of the Excel file
+   */
   private async processAnnexes(
     workbook: ExcelJS.Workbook,
     name: string,
@@ -231,6 +329,14 @@ export class AnnexGenerationService {
     await workbook.xlsx.writeFile(__dirname + '/' + name + '.xlsx');
   }
 
+  /**
+   * Updates the worksheet of an annex
+   * @param worksheet  - Excel worksheet
+   * @param annexData  - Array of annex IDs to be generated
+   * @param row  - Row of the Excel file
+   * @param annex  - Annex object
+   * @returns  void
+   */
   private updateWorksheet(
     worksheet: ExcelJS.Worksheet,
     annexData: any[],
@@ -251,7 +357,12 @@ export class AnnexGenerationService {
       }
     }
   }
-
+  /**
+   * Updates the cell of an annex worksheet according to its type
+   * @param worksheet - Excel worksheet
+   * @param item - Annex cell object
+   * @param row - Row of the Excel file
+   */
   private updateCell(worksheet: ExcelJS.Worksheet, item: any, row: any) {
     if (row[item.cell.name] instanceof Date) {
       this.updateDateCell(worksheet, item, row);
@@ -268,11 +379,26 @@ export class AnnexGenerationService {
     }
   }
 
+  /**
+   *  Updates the cell of an annex worksheet with a date
+   * @param worksheet  - Excel worksheet
+   * @param item  - Annex cell object
+   * @param row  - Row of the Excel file
+   */
   private updateDateCell(worksheet: ExcelJS.Worksheet, item: any, row: any) {
     worksheet.getCell(item.cell.cell).value =
-      row['Lugar'] +", "+ row[item.cell.name].toLocaleDateString();
+      /*                                                                                         */ row[
+        item.cell.name
+      ].toLocaleDateString();
   }
 
+  /**
+   *  Updates the cell of an annex worksheet with a Yes/No value
+   * @param worksheet  - Excel worksheet
+   * @param item  - Annex cell object
+   * @param row  - Row of the Excel file
+   * @param temp  - Array of cell names
+   */
   private updateYesNoCell(
     worksheet: ExcelJS.Worksheet,
     item: any,
@@ -286,6 +412,13 @@ export class AnnexGenerationService {
     }
   }
 
+  /**
+   *  Updates the cell of an annex worksheet with a level value
+   * @param worksheet  - Excel worksheet
+   * @param item  - Annex cell object
+   * @param row  - Row of the Excel file
+   * @param temp  - Array of cell names
+   */
   private updateLevelCell(
     worksheet: ExcelJS.Worksheet,
     item: any,
@@ -301,13 +434,31 @@ export class AnnexGenerationService {
     }
   }
 
+  /**
+   *  Updates the cell of an annex worksheet with a default value
+   * @param worksheet  - Excel worksheet
+   * @param item  - Annex cell object
+   * @param row  - Row of the Excel file
+   */
   private updateDefaultCell(worksheet: ExcelJS.Worksheet, item: any, row: any) {
     worksheet.getCell(item.cell.cell).value = row[item.cell.name];
   }
+
+  /**
+   * Parses the annex cell object to an array
+   * @param annexCell  - Annex cell object
+   * @returns any[] - Array of annex cell objects
+   */
   private parseAnnexCell(annexCell: any): any[] {
     const list = JSON.stringify(annexCell, null, 2);
     return JSON.parse(list);
   }
+
+  /**
+   * Uploads the generated files to Google Drive and deletes them
+   * @param filesData  - Object that contains the data of the generated files {name: string, path: string}
+   * @returns Promise<any[]> - Array of Google Drive IDs
+   */
   private async uploadAndCleanup(filesData: GeneratedFileData): Promise<any[]> {
     const filesID = [];
 
@@ -323,6 +474,11 @@ export class AnnexGenerationService {
 
     return filesID;
   }
+
+  /**
+   * Deletes a file
+   * @param filePath  - Path of the file
+   */
   private unlinkFile(filePath: string): void {
     fs.unlink(filePath, (err) => {
       if (err) {

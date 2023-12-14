@@ -15,6 +15,7 @@ import { AnnexGenerationModule } from './annex-generation/annex-generation.modul
 import { AnnexModule } from './api/pld/annex/annex.module';
 import { AnnexCellModule } from './api/pld/annex-cell/annex-cell.module';
 import { CellModule } from './api/pld/cell/cell.module';
+import { HistoricModule } from './api/pld/historic/historic.module';
 
 const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
 @Module({
@@ -30,6 +31,7 @@ const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
     AnnexModule,
     AnnexCellModule,
     CellModule,
+    HistoricModule
   ],
   controllers: [AppController],
   providers: [AppService, AnnexGenerationService],
