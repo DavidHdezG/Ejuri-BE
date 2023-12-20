@@ -141,6 +141,50 @@ export class UsersController {
   }
 
   /**
+   * Reset the password of a user with the token sent by email
+   * @param token 
+   * @param newPassword 
+   * @returns 
+   */
+  @ApiResponse({ status: 200, description: 'Contraseña cambiada' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
+  @ApiResponse({ status: 400, description: 'Error al autentificar' })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('resetPassword/:token')
+  async resetPassword(
+    @Param('token') token: string,
+    @Body('newPassword') newPassword: string,
+  ) {
+    const user = await this.authService.resetPassword(token, newPassword);
+    if (!user) {
+      return new BadRequestException('Error al autentificar');
+    }
+    return user;
+  }
+
+  
+
+  /**
+   * Send an email to reset the password of a user
+   * @param email - Email of the user 
+   * @returns 
+   */
+  @ApiResponse({ status: 200, description: 'Contraseña cambiada' })
+  @ApiResponse({ status: 403, description: 'Prohibido.' })
+  @ApiResponse({ status: 400, description: 'Error al autentificar' })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('resetPassword')
+  async sendEmailToResetPassword(
+    @Body('email') email: string,
+  ) {
+    const user = await this.authService.sendResetPasswordEmail(email);
+    if (!user) {
+      return new BadRequestException('Error al autentificar');
+    }
+    return user;
+  }
+
+  /**
    * Get the current user
    * @param user 
    * @returns 

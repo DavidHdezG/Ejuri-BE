@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
-import { HistoricService } from './historic.service';
+import { HistoricService } from './pldhistoric.service';
 import { CreateHistoricDto } from './dto/create-historic.dto';
 import { UpdateHistoricDto } from './dto/update-historic.dto';
 import { ApiCookieAuth, ApiResponse } from '@nestjs/swagger';

@@ -3,24 +3,41 @@ import { AnnexService } from 'src/api/pld/annex/annex.service';
 import * as ExcelJS from 'exceljs';
 import fs from 'fs';
 import { DriveService } from 'src/drive/drive.service';
-import { HistoricService } from 'src/api/pld/historic/historic.service';
+import { HistoricService } from 'src/api/pld/pldhistoric/pldhistoric.service';
 import { User } from 'src/users/entities/user.entity';
-import { Historic } from 'src/api/pld/historic/entities/historic.entity';
+import { Pldhistoric } from 'src/api/pld/pldhistoric/entities/pldhistoric.entity';
 import { Annex } from 'src/api/pld/annex/entities/annex.entity';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale/es';
+/**
+ * Object that contains the data of the generated files {name: string, path: string, client: string}
+ */
 class GeneratedFileData {
   private set: Set<any>;
   constructor() {
     this.set = new Set<any>();
   }
 
-  addData(obj: { name: string; path: string }): void {
-    const key = JSON.stringify({ name: obj.name, path: obj.path });
+  /**
+   * Adds data to the set
+   * @param obj - {name: string, path: string, client: string}
+   */
+  addData(obj: { name: string; path: string; client: string }): void {
+    const key = JSON.stringify({
+      name: obj.name,
+      path: obj.path,
+      client: obj.client,
+    });
     if (!this.set.has(key)) {
       this.set.add(key);
     }
   }
 
-  getData(): Array<{ name: string; path: string }> {
+  /**
+   * Returns the data of the set as an array
+   * @returns Array<{name: string, path: string, client: string}>
+   */
+  getData(): Array<{ name: string; path: string; client: string }> {
     return Array.from(this.set, (key) => JSON.parse(key));
   }
 }
@@ -30,100 +47,13 @@ export class AnnexGenerationService {
     @Inject(AnnexService) private readonly annexService: AnnexService,
     @Inject(DriveService) private readonly driveService: DriveService,
     @Inject(HistoricService) private readonly historicService: HistoricService,
-  ) {}
-
-  /* async generateAnnex(filePath: string, annexData: any) {
-    const filesData = new GeneratedFileData();
-    const file = await this.loadExcelFile(filePath);
-    const annexList = await this.annexService.findAll();
-    const annexListID = annexList.map((annex) => annex.id);
-    for (const row of file) {
-      let workbook = new ExcelJS.Workbook();
-      let name =
-        row[
-          'Nombre Completo (apellido paterno, materno y nombre(s) sin abreviaturas) o Razón Social'
-        ];
-      workbook = await workbook.xlsx.readFile(__dirname + '/new.xlsx');
-
-      if (annexData[name].length == 0) {
-        continue;
-      }
-
-      for (const id of annexListID) {
-        const annex = await this.annexService.findOne(id);
-
-        let worksheet: ExcelJS.Worksheet = workbook.getWorksheet(annex.name);
-        if (!worksheet) {
-          continue;
-        }
-        if (!annexData[name].includes(annex.id)) {
-          worksheet.state = 'hidden';
-          continue;
-        }
-        let list = JSON.stringify(annex.annexCell, null, 2);
-        let dlist = JSON.parse(list);
-
-        for (const item of dlist) {
-          if (row[item.cell.name]) {
-            if (row[item.cell.name] instanceof Date) {
-              worksheet.getCell(item.cell.cell).value =
-                row[item.cell.name].toLocaleDateString();
-              continue;
-            }
-
-            const temp = String(item.cell.cell).split('-');
-
-            if (temp.length == 2) {
-              if (row[item.cell.name] == 'Si') {
-                worksheet.getCell(temp[0]).value = 'X';
-              } else if (row[item.cell.name] == 'No') {
-                worksheet.getCell(temp[1]).value = 'X';
-              }
-              continue;
-            }
-            if (temp.length == 3) {
-              if (row[item.cell.name] == 'Alta') {
-                worksheet.getCell(temp[2]).value = 'X';
-              } else if (row[item.cell.name] == 'Media') {
-                worksheet.getCell(temp[1]).value = 'X';
-              } else if (row[item.cell.name] == 'Baja') {
-                worksheet.getCell(temp[0]).value = 'X';
-              }
-              continue;
-            }
-            worksheet.getCell(item.cell.cell).value = row[item.cell.name];
-          } else {
-            Logger.debug(item.cell.name);
-          }
-        }
-
-        const tempFileData = {
-          name: name + '.xlsx',
-          path: __dirname + '/' + name + '.xlsx',
-        };
-
-        filesData.addData(tempFileData);
-      }
-
-      await workbook.xlsx.writeFile(__dirname + '/' + name + '.xlsx');
+  ) {
+    if(!fs.existsSync(__dirname + '/new.xlsx')){
+      this.driveService.downloadFile(process.env.PLD_EXCEL_TEMPLATE_ID,__dirname+ '/new.xlsx');
+      Logger.debug("PLD Annex template downloaded");
     }
-    const filesID = [];
-    for (const filePath of filesData.getData()) {
-      const id = await this.driveService.uploadExcelFile(
-        filePath.path,
-        filePath.name,
-      );
-      filesID.push({ id: id, name: filePath.name });
-      fs.unlink(filePath.path, (err) => {
-        if (err) {
-          console.error(err);
-          return;
-        }
-      });
-    }
-    
-    return filesID;
-  } */
+
+  }
 
   /**
    * Loads an Excel file and returns its data
@@ -135,21 +65,18 @@ export class AnnexGenerationService {
     return workbook.xlsx
       .readFile(fileName)
       .then(function () {
-        const worksheet = workbook.getWorksheet(1); // Suponiendo que la hoja deseada es la primera (índice 1).
+        const worksheet = workbook.getWorksheet(1); 
 
         const data = [];
         const headers = [];
 
-        // Obtén los encabezados de la tabla
         worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
           headers.push(cell.value);
         });
 
-        // Recorre las filas de datos
         for (let row = 2; row <= worksheet.rowCount; row++) {
           const rowData = {};
 
-          // Recorre las celdas en cada fila y crea un objeto
           worksheet
             .getRow(row)
             .eachCell({ includeEmpty: true }, (cell, colNumber) => {
@@ -165,7 +92,6 @@ export class AnnexGenerationService {
       });
   }
 
-  // TESTING REESCRITURA DEL CODE
   /**
    * Generates the annexes of all clients in the Excel file
    * @param filePath  - Path of the Excel file
@@ -205,7 +131,10 @@ export class AnnexGenerationService {
        * @type {string}
        */
       const name: string = this.extractName(row);
-
+      const client: string = this.extractClient(row);
+      if (annexData[name] == undefined) {
+        continue;
+      }
       if (this.isAnnexDataEmpty(annexData[name])) {
         continue;
       }
@@ -213,20 +142,17 @@ export class AnnexGenerationService {
       await this.processAnnexes(
         workbook,
         name,
+        client,
         annexData[name],
         annexListID,
         filesData,
         row,
       );
     }
-    const filesID = await this.uploadAndCleanup(filesData);
-    for (const row of file) {
-      const name = this.extractName(row);
-      if (this.isAnnexDataEmpty(annexData[name])) {
-        continue;
-      }
-      const driveId = filesID.find((file) => file.name == name + '.xlsx').id;
-      await this.saveAnnexHistoric(name, row['No. de Cliente'], driveId, user);
+    const mergedFilesData = await this.mergeByClient(filesData);
+    const filesID = await this.uploadAndCleanup(mergedFilesData);
+    for (const file of filesID) {
+      this.saveAnnexHistoric(file.name, file.id, user);
     }
     return filesID;
   }
@@ -240,14 +166,12 @@ export class AnnexGenerationService {
    * @returns Promise<Historic>
    */
   private async saveAnnexHistoric(
-    name: string,
-    clientNumber: string,
+    companyName: string,
     driveId: string,
     user: User,
-  ): Promise<Historic> {
+  ): Promise<Pldhistoric> {
     const res = await this.historicService.create({
-      name: name,
-      clientNumber: clientNumber,
+      companyName: companyName,
       driveId: driveId,
       user: String(user.id),
     });
@@ -273,14 +197,22 @@ export class AnnexGenerationService {
   }
 
   /**
-   * Extracts the name of the client it's related to
+   * Extracts the name of the client
    * @param row  - Row of the Excel file
    * @returns  string - Name of the client
    */
   private extractName(row: any): string {
     return row[
-      'Cliente al que está relacionado'
+      'Nombre Completo (apellido paterno, materno y nombre(s) sin abreviaturas) o Razón Social'
     ];
+  }
+  /**
+   * Extracts the name of the client it's related to
+   * @param row  - Row of the Excel file
+   * @returns  string - Name of the client
+   */
+  private extractClient(row: any): string {
+    return row['Cliente al que está relacionado'];
   }
 
   /**
@@ -296,6 +228,7 @@ export class AnnexGenerationService {
    * Generates the annexes of a client
    * @param workbook  - Excel workbook
    * @param name  - Name of the client
+   * @param client - Name of the client it's related to
    * @param annexData  - Array of annex IDs to be generated
    * @param annexListID  - Array of all annex IDs
    * @param filesData  - Object that contains the data of the generated files {name: string, path: string}
@@ -304,6 +237,7 @@ export class AnnexGenerationService {
   private async processAnnexes(
     workbook: ExcelJS.Workbook,
     name: string,
+    client: string,
     annexData: any[],
     annexListID: number[],
     filesData: GeneratedFileData,
@@ -323,6 +257,7 @@ export class AnnexGenerationService {
       const tempFileData = {
         name: name + '.xlsx',
         path: __dirname + '/' + name + '.xlsx',
+        client: client,
       };
       filesData.addData(tempFileData);
     }
@@ -364,7 +299,9 @@ export class AnnexGenerationService {
    * @param row - Row of the Excel file
    */
   private updateCell(worksheet: ExcelJS.Worksheet, item: any, row: any) {
-    if (row[item.cell.name] instanceof Date) {
+    if (item.cell.name == 'Fecha') {
+      this.updatePlaceAndDateCell(worksheet, item, row);
+    } else if (row[item.cell.name] instanceof Date) {
       this.updateDateCell(worksheet, item, row);
     } else {
       const temp = String(item.cell.cell).split('-');
@@ -380,6 +317,31 @@ export class AnnexGenerationService {
   }
 
   /**
+   * Formats a date to the format "dd 'de' MMMM 'de' yyyy" (es)
+   * @param date - Date to be formatted
+   * @returns
+   */
+  private formatDate(date: Date): string {
+    return format(date, "dd 'de' MMMM 'de' yyyy", { locale: es });
+  }
+
+  /**
+   * Updates the cell of an annex worksheet with a place and date value
+   * @param worksheet - Excel worksheet
+   * @param item - Annex cell object
+   * @param row - Row of the Excel file
+   */
+  private updatePlaceAndDateCell(
+    worksheet: ExcelJS.Worksheet,
+    item: any,
+    row: any,
+  ) {
+    const date = this.formatDate(row[item.cell.name]).toUpperCase();
+    const place = row['Lugar'].toUpperCase();
+    worksheet.getCell(item.cell.cell).value = place + ' A ' + date;
+  }
+
+  /**
    *  Updates the cell of an annex worksheet with a date
    * @param worksheet  - Excel worksheet
    * @param item  - Annex cell object
@@ -387,9 +349,7 @@ export class AnnexGenerationService {
    */
   private updateDateCell(worksheet: ExcelJS.Worksheet, item: any, row: any) {
     worksheet.getCell(item.cell.cell).value =
-      /*                                                                                         */ row[
-        item.cell.name
-      ].toLocaleDateString();
+      row[item.cell.name].toLocaleDateString();
   }
 
   /**
@@ -405,9 +365,10 @@ export class AnnexGenerationService {
     row: any,
     temp: string[],
   ) {
-    if (row[item.cell.name] == 'Si') {
+    const cellText = row[item.cell.name].toLowerCase();
+    if (cellText == 'si') {
       worksheet.getCell(temp[0]).value = 'X';
-    } else if (row[item.cell.name] == 'No') {
+    } else if (cellText == 'no') {
       worksheet.getCell(temp[1]).value = 'X';
     }
   }
@@ -425,11 +386,12 @@ export class AnnexGenerationService {
     row: any,
     temp: string[],
   ) {
-    if (row[item.cell.name] == 'Alta') {
+    const cellText = row[item.cell.name].toLowerCase();
+    if (cellText == 'alta') {
       worksheet.getCell(temp[2]).value = 'X';
-    } else if (row[item.cell.name] == 'Media') {
+    } else if (cellText == 'media') {
       worksheet.getCell(temp[1]).value = 'X';
-    } else if (row[item.cell.name] == 'Baja') {
+    } else if (cellText == 'baja') {
       worksheet.getCell(temp[0]).value = 'X';
     }
   }
@@ -465,14 +427,85 @@ export class AnnexGenerationService {
     for (const filePath of filesData.getData()) {
       const id = await this.driveService.uploadExcelFile(
         filePath.path,
-        filePath.name,
+        'PLD ' + filePath.name,
       );
-      filesID.push({ id: id, name: filePath.name });
+      filesID.push({ id: id, name: 'PLD ' + filePath.name });
 
       this.unlinkFile(filePath.path);
     }
 
     return filesID;
+  }
+
+  /**
+   * Sends to merge the generated files by client and returns the path of the merged files
+   * @param filesData - Object that contains the data of the generated files {name: string, path: string, client: string}
+   * @returns
+   */
+  private async mergeByClient(
+    filesData: GeneratedFileData,
+  ): Promise<GeneratedFileData> {
+    const mergedData = new GeneratedFileData();
+    const files = filesData.getData();
+    const clients = this.extractClients(files);
+    for (const client of clients) {
+      const clientFiles = files.filter((file) => file.client == client);
+      const mergedFile = await this.mergeFiles(clientFiles);
+      mergedData.addData({ name: client, path: mergedFile, client: client });
+    }
+    return mergedData;
+  }
+
+  /**
+   *  Extracts the clients from the generated files
+   * @param files  - Array of generated files data {name: string, path: string, client: string}
+   * @returns
+   */
+  private extractClients(files: any[]): string[] {
+    const clients = files.map((file) => file.client);
+    return [...new Set(clients)];
+  }
+
+  /**
+   *  Merges the generated files and returns the path of the merged file
+   * @param files - Array of generated files data {name: string, path: string, client: string}
+   * @returns
+   */
+  private async mergeFiles(files: any[]): Promise<string> {
+    //const sheet = workbook.addWorksheet('My Sheet');
+    if (!files[0].client) {
+      return;
+    }
+    const baseFilePath = `${__dirname}/${files[0].client}.xlsx`;
+    const newWorkbook = new ExcelJS.Workbook();
+    /*  const sheet = newWorkbook.addWorksheet('aux');
+    sheet.state = 'hidden'; */
+    await newWorkbook.xlsx.writeFile(baseFilePath);
+    const workbookBase = await newWorkbook.xlsx.readFile(baseFilePath);
+
+    for (const file of files) {
+      const name = this.extractInitials(file.name);
+      let source = new ExcelJS.Workbook();
+      source = await source.xlsx.readFile(`${__dirname}/${file.name}`);
+      source.eachSheet((sheet, index) => {
+        if (sheet.state == 'hidden') {
+          return;
+        }
+        const newSheet = workbookBase.addWorksheet(name + '-' + sheet.name);
+        newSheet.model = Object.assign(sheet.model, {
+          mergeCells: sheet.model.merges,
+        });
+        newSheet.name = name + '-' + sheet.name;
+      });
+    }
+    await workbookBase.xlsx.writeFile(baseFilePath);
+    return baseFilePath;
+  }
+
+  private extractInitials(name: string): string {
+    const splitName = name.split(' ');
+    const initials = splitName.map((name) => name[0]);
+    return initials.join('');
   }
 
   /**

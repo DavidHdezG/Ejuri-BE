@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { HistoricService } from './historic.service';
-import { HistoricController } from './historic.controller';
+import { HistoricService } from './pldhistoric.service';
+import { HistoricController } from './pldhistoric.controller';
 import { UsersModule } from 'src/users/users.module';
 import { RolesModule } from 'src/users/roles/roles.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Historic } from './entities/historic.entity';
+import { Pldhistoric } from './entities/pldhistoric.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Historic]),UsersModule,RolesModule],
+  imports: [TypeOrmModule.forFeature([Pldhistoric]),UsersModule,RolesModule],
   controllers: [HistoricController],
   providers: [HistoricService],
   exports: [HistoricService]

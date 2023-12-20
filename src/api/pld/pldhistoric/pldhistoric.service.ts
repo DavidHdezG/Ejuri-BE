@@ -2,15 +2,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateHistoricDto } from './dto/create-historic.dto';
 import { UpdateHistoricDto } from './dto/update-historic.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Historic } from './entities/historic.entity';
+import { Pldhistoric } from './entities/pldhistoric.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
 export class HistoricService {
-  @InjectRepository(Historic)
-  private readonly repository: Repository<Historic>;
+  @InjectRepository(Pldhistoric)
+  private readonly repository: Repository<Pldhistoric>;
   async create(createHistoricDto: CreateHistoricDto) {
-    const historic: Historic = this.repository.create(createHistoricDto);
+    const historic: Pldhistoric = this.repository.create(createHistoricDto);
     return await this.repository.save(historic);
   }
 

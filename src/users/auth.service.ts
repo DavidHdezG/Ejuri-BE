@@ -8,7 +8,6 @@ import { UsersService } from './users.service';
 import { randomBytes, scrypt as _scrypt } from 'crypto';
 import { promisify } from 'util';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken'
@@ -102,15 +101,15 @@ export class AuthService {
       port: 587,
       secure: false,
       auth: {
-        user: 'dhernandez@blucapital.mx',
-        pass: 'hvllydpiovikvwex',
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
       },
     });
-
+    
     const token = jwt.sign({email:user.email},process.env.JWT_SECRET)
     const urlConfirm = `${process.env.FRONTEND_URL}/confirmAccount/${token}`;
     const mailDetails = {
-      from: "Ejuri <dhernandez@blucapital.mx>", // sender address
+      from: `Ejuri <${process.env.MAIL_USER}>`, // sender address
       to: user.email, // receiver email
       subject: `${user.name}, confirma tu email`, // Subject line
       html: `<h3>Credenciales:</h3>
@@ -150,7 +149,74 @@ export class AuthService {
     }catch(e){
       Logger.error(e,'AuthService - confirmAccount')
     }
-
-
   }
-}
+
+  /**
+   * Reset the password of a user with a token
+   * @param token - Token to reset the password
+   * @param newPassword - New password
+   * @returns 
+   */
+  async resetPassword(token:string,newPassword:string){
+    let email=null;
+    try{
+      const payload:any = jwt.verify(token,process.env.JWT_SECRET)
+      email=payload.email;
+
+      const user = await this.usersService.findOne(email);
+      if(!user){
+        throw new NotFoundException('User not found')
+      } 
+
+      const salt = randomBytes(8).toString('hex');
+      const hash = (await scrypt(newPassword, salt, 32)) as Buffer;
+      const result = salt + '.' + hash.toString('hex');
+      Object.assign(user, { password: result });
+      const resultUpdate = await this.usersService.update(user.id, user);
+
+      return resultUpdate;
+    }catch(e){
+      Logger.error(e,'AuthService - resetPassword')
+    }
+  }
+
+  /**
+   * Send a reset password email to a user
+   * @param email 
+   * @returns 
+   */
+
+  async sendResetPasswordEmail(email:string){
+    const user = await this.usersService.findOne(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+    });
+    
+    const token = jwt.sign({email:email},process.env.JWT_SECRET)
+    const url = `${process.env.FRONTEND_URL}/resetPassword/${token}`;
+    const mailDetails = {
+      from: `Ejuri <${process.env.MAIL_USER}>`, // sender address
+      to: email, // receiver email
+      subject: `${user.name}, restablece tu contraseña`, // Subject line
+      html: `Restablece tu contraseña <a href="${url}">aquí.</a></p>`,
+  }
+    try {
+      const info = await transporter.sendMail(mailDetails)
+      return user;
+    } catch (error) {
+      Logger.error(error,'AuthService - sendConfirmationEmail')
+    } 
+  }
+  }
+
+

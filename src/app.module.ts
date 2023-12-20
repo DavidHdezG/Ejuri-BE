@@ -15,7 +15,7 @@ import { AnnexGenerationModule } from './annex-generation/annex-generation.modul
 import { AnnexModule } from './api/pld/annex/annex.module';
 import { AnnexCellModule } from './api/pld/annex-cell/annex-cell.module';
 import { CellModule } from './api/pld/cell/cell.module';
-import { HistoricModule } from './api/pld/historic/historic.module';
+import { HistoricModule } from './api/pld/pldhistoric/pldhistoric.module';
 
 const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
 @Module({

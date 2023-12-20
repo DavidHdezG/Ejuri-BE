@@ -5,7 +5,7 @@ import { AnnexModule } from 'src/api/pld/annex/annex.module';
 import { DriveModule } from 'src/drive/drive.module';
 import { RolesModule } from 'src/users/roles/roles.module';
 import { UsersModule } from 'src/users/users.module';
-import { HistoricModule } from 'src/api/pld/historic/historic.module';
+import { HistoricModule } from 'src/api/pld/pldhistoric/pldhistoric.module';
 
 @Module({
     imports: [AnnexModule,DriveModule,RolesModule,UsersModule, HistoricModule],

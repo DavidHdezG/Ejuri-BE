@@ -1,14 +1,12 @@
 import { User } from "src/users/entities/user.entity";
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 @Entity()
-export class Historic {
+export class Pldhistoric {
     @PrimaryGeneratedColumn()
     public id: number;
 
-    @Column()
-    name:string;
     @Column({nullable:true})
-    public clientNumber: string;
+    public companyName: string;
     
     @CreateDateColumn({ type: 'timestamp' })
     public createdAt!: Date;

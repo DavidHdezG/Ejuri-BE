@@ -13,7 +13,7 @@ import {
 /* import { Role } from '../interfaces/role.interface'; */
 import { Status } from '../interfaces/status.interface';
 import { Role } from '../roles/entities/role.entity';
-import { Historic } from 'src/api/pld/historic/entities/historic.entity';
+import {Pldhistoric } from 'src/api/pld/pldhistoric/entities/pldhistoric.entity';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -41,8 +41,8 @@ export class User {
   @OneToMany(() => Qrhistoric, (qrhistoric) => qrhistoric.id)
   qrhistoric: Qrhistoric[];
 
-  @OneToMany(()=>Historic, (historic) => historic.id)
-  pldHistoric: Historic[];
+  @OneToMany(()=>Pldhistoric, (pldhistoric) => pldhistoric.id)
+  pldHistoric: Pldhistoric[];
   @Exclude()
   @Column({type: 'enum',enum: Status,default:Status.NO_CONFIRMADO})
   status:Status

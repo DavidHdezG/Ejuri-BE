@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { HistoricController } from './historic.controller';
-import { HistoricService } from './historic.service';
+import { HistoricController } from './pldhistoric.controller';
+import { HistoricService } from './pldhistoric.service';
 
 describe('HistoricController', () => {
   let controller: HistoricController;

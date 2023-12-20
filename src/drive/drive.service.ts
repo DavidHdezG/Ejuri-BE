@@ -47,9 +47,11 @@ interface FinalData {
 
 @Injectable()
 export class DriveService {
-  private readonly toMoveFolderId = '1-uBzk8Ny-mLijePleg02BJ8ROYAb94vr';
-  private readonly failedFolder = '1-WRfT0tWalA0CLOTXS6ayaGxFmjD2V9r';
-  private readonly buro = '1WWB8xOyMFAy-3Hg1ye5NDO155l4iItKL';
+  private readonly toMoveFolderId = process.env.TO_MOVE_FOLDER_ID;
+  private readonly failedFolder = process.env.FAILED_FOLDER_ID;
+  private readonly successfulFolder = process.env.SUCCESSFUL_FOLDER_ID;
+  private readonly buro = process.env.BURO_FOLDER_ID;
+  private readonly pldExcelFolder = process.env.PLD_EXCEL_FOLDER_ID;
   /*   @Inject(ClientService)
   private readonly clientService: ClientService; */
 
@@ -90,7 +92,7 @@ export class DriveService {
    * @param fileId Id of the file to move.
    */
   async moveFile(fileId:string):Promise<void> {
-    const newFolderId = "1enIy8cOLVz59jZLNvKMadLNwfY3UpzvT";
+    const newFolderId = this.successfulFolder;
     try {
       await drive.files.update({
         fileId: fileId,
@@ -168,7 +170,7 @@ export class DriveService {
       const writeStream = fs.createWriteStream(destinationPath);
       response.data
         .on('end', () => {
-          Logger.debug('Archivo descargado con éxito.', 'DriveService');
+          
         })
         .on('error', (err: any) => {
           Logger.error(
@@ -444,7 +446,7 @@ export class DriveService {
   async uploadExcelFile(filePath:string, fileName:string){
     const archivoMetadata = {
       name: fileName,
-      parents: ['13KDHL_BMLMOH3jQwlu1qCm-2x1E2w8Pr'],
+      parents: [this.pldExcelFolder],
     };
 
     const archivoMedia = {
