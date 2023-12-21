@@ -5,10 +5,10 @@ import { DriveService } from './drive.service';
 export class DriveController {
   constructor(private readonly driveService: DriveService) {}
 
-  @Post()
+/*   @Post()
   async test() {
     this.driveService
-      .downloadAllFiles()
+      .downloadAllFilesFromGoogleDrive()
       .then(async () => {
         console.log('Descarga completa. Ejecutando readTempFolder()...');
         await new Promise(resolve => setTimeout(resolve, 5000))
@@ -24,7 +24,6 @@ export class DriveController {
 
   @Post('trigger')
   async trigger() {
-    /* console.log(await this.driveService.uploadExcelFile()); */
-  }
+  } */
 
 }

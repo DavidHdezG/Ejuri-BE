@@ -73,3 +73,5 @@ Content-Type: application/json
     "user":42
 }
 
+### Test drive
+POST http://localhost:3001/drive/

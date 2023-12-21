@@ -9,11 +9,11 @@ export class CronjobsService {
   /**
    * Cron job to read the temp folder and move the files to the correct folder in Google Drive
    */
-  /* @Cron(CronExpression.EVERY_5_MINUTES)
+/*   @Cron(CronExpression.EVERY_DAY_AT_1PM)
   async readFolder() {
 
     this.driveService
-      .downloadAllFiles()
+      .downloadAllFilesFromGoogleDrive()
       .then(async () => {
         Logger.debug('Descarga completa de archivos. Ejecutando ordenamiento...', 'CronjobsService');
         await new Promise(resolve => setTimeout(resolve, 15000))

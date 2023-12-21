@@ -40,10 +40,6 @@ export class HistoricController {
     return this.historicService.findOne(+id);
   }
 
-  /* @Patch(':id')
-  update(@Param('id') id: string, @Body() updateHistoricDto: UpdateHistoricDto) {
-    return this.historicService.update(+id, updateHistoricDto);
-  } */
   @ApiResponse({ status: 200, description: 'Historial eliminado' })
   @ApiResponse({ status: 403, description: 'Prohibido.' })
   @ApiResponse({ status: 404, description: 'Historial no encontrado' })

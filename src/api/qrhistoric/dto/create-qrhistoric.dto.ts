@@ -2,7 +2,6 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 export class CreateQrhistoricDto {
-    /* @IsNumber() */
     @ApiProperty()
     @IsNotEmpty()
     client:string;
@@ -18,7 +17,6 @@ export class CreateQrhistoricDto {
     @IsNotEmpty()
     document:string; 
     @ApiProperty()
-    /* @IsString() */
     @IsNotEmpty()
     @ApiProperty()
     category:string;
@@ -30,4 +28,7 @@ export class CreateQrhistoricDto {
     @IsNumber()
     @IsNotEmpty()
     user:string;
+
+
+ 
 }

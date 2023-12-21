@@ -7,28 +7,4 @@ import { UpdateCellDto } from './dto/update-cell.dto';
 export class CellController {
   constructor(private readonly cellService: CellService) {}
 
-  @Post()
-  create(@Body() createCellDto: CreateCellDto) {
-    return this.cellService.create(createCellDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.cellService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.cellService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCellDto: UpdateCellDto) {
-    return this.cellService.update(+id, updateCellDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.cellService.remove(+id);
-  }
 }

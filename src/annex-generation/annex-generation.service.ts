@@ -48,11 +48,13 @@ export class AnnexGenerationService {
     @Inject(DriveService) private readonly driveService: DriveService,
     @Inject(HistoricService) private readonly historicService: HistoricService,
   ) {
-    if(!fs.existsSync(__dirname + '/new.xlsx')){
-      this.driveService.downloadFile(process.env.PLD_EXCEL_TEMPLATE_ID,__dirname+ '/new.xlsx');
-      Logger.debug("PLD Annex template downloaded");
+    if (!fs.existsSync(__dirname + '/new.xlsx')) {
+      this.driveService.downloadFile(
+        process.env.PLD_EXCEL_TEMPLATE_ID,
+        __dirname + '/new.xlsx',
+      );
+      Logger.debug('PLD Annex template downloaded');
     }
-
   }
 
   /**
@@ -65,7 +67,7 @@ export class AnnexGenerationService {
     return workbook.xlsx
       .readFile(fileName)
       .then(function () {
-        const worksheet = workbook.getWorksheet(1); 
+        const worksheet = workbook.getWorksheet(1);
 
         const data = [];
         const headers = [];
@@ -101,7 +103,7 @@ export class AnnexGenerationService {
    */
   async generateAnnex(filePath: string, annexData: any, user: User) {
     /**
-     * Object that contains the data of the generated files {name: string, path: string}
+     * Object that contains the data of the generated files {name: string, path: string, client: string}
      * @type {GeneratedFileData}
      */
     const filesData: GeneratedFileData = new GeneratedFileData();
@@ -131,6 +133,10 @@ export class AnnexGenerationService {
        * @type {string}
        */
       const name: string = this.extractName(row);
+      /**
+       * Name of the client it's related to
+       * @type {string}
+       */
       const client: string = this.extractClient(row);
       if (annexData[name] == undefined) {
         continue;
@@ -149,8 +155,18 @@ export class AnnexGenerationService {
         row,
       );
     }
-    const mergedFilesData = await this.mergeByClient(filesData);
-    const filesID = await this.uploadAndCleanup(mergedFilesData);
+    /**
+     * Object that contains the data of the merged files by Client
+     * @type {GeneratedFileData}
+     */
+    const mergedFilesData: GeneratedFileData = await this.mergeByClient(
+      filesData,
+    );
+    /**
+     * Array of Google Drive IDs and names of the generated files
+     * @type {any[]}
+     */
+    const filesID: any[] = await this.uploadAndCleanup(mergedFilesData);
     for (const file of filesID) {
       this.saveAnnexHistoric(file.name, file.id, user);
     }
@@ -244,9 +260,16 @@ export class AnnexGenerationService {
     row: any,
   ): Promise<void> {
     for (const id of annexListID) {
-      const annex = await this.annexService.findOne(id);
-
-      const worksheet = workbook.getWorksheet(annex.name);
+      /**
+       * Annex object by ID
+       * @type {Annex}
+       */
+      const annex: Annex = await this.annexService.findOne(id);
+      /**
+       * Excel worksheet of the annex object
+       * @type {ExcelJS.Worksheet}
+       */
+      const worksheet: ExcelJS.Worksheet = workbook.getWorksheet(annex.name);
 
       if (!worksheet) {
         continue;
@@ -254,12 +277,11 @@ export class AnnexGenerationService {
 
       this.updateWorksheet(worksheet, annexData, row, annex);
 
-      const tempFileData = {
+      filesData.addData({
         name: name + '.xlsx',
         path: __dirname + '/' + name + '.xlsx',
         client: client,
-      };
-      filesData.addData(tempFileData);
+      });
     }
     await workbook.xlsx.writeFile(__dirname + '/' + name + '.xlsx');
   }
@@ -282,14 +304,17 @@ export class AnnexGenerationService {
       worksheet.state = 'hidden';
       return;
     }
+    /**
+     * Array of annex cells from the annex object
+     */
     const dlist = this.parseAnnexCell(annex.annexCell);
 
     for (const item of dlist) {
       if (row[item.cell.name]) {
         this.updateCell(worksheet, item, row);
-      } else {
+      } /* else {
         Logger.debug(item.cell.name);
-      }
+      } */
     }
   }
   /**
@@ -304,7 +329,11 @@ export class AnnexGenerationService {
     } else if (row[item.cell.name] instanceof Date) {
       this.updateDateCell(worksheet, item, row);
     } else {
-      const temp = String(item.cell.cell).split('-');
+      /**
+       * Split the cell name by '-' to check the type of the cell in case it's a cell like "B1-C1-D1"
+       * @type {string[]}
+       */
+      const temp: string[] = String(item.cell.cell).split('-');
 
       if (temp.length == 2) {
         this.updateYesNoCell(worksheet, item, row, temp);
@@ -336,8 +365,16 @@ export class AnnexGenerationService {
     item: any,
     row: any,
   ) {
-    const date = this.formatDate(row[item.cell.name]).toUpperCase();
-    const place = row['Lugar'].toUpperCase();
+    /**
+     * Formats the date to uppercase and dd 'de' MMMM 'de' yyyy (es)
+     * @type {string}
+     */
+    const date: string = this.formatDate(row[item.cell.name]).toUpperCase();
+    /**
+     * Formats the place to uppercase
+     * @type {string}
+     */
+    const place: string = row['Lugar'].toUpperCase();
     worksheet.getCell(item.cell.cell).value = place + ' A ' + date;
   }
 
@@ -365,7 +402,11 @@ export class AnnexGenerationService {
     row: any,
     temp: string[],
   ) {
-    const cellText = row[item.cell.name].toLowerCase();
+    /**
+     * Converts the cell text from file to lowercase
+     * @type {string}
+     */
+    const cellText: string = row[item.cell.name].toLowerCase();
     if (cellText == 'si') {
       worksheet.getCell(temp[0]).value = 'X';
     } else if (cellText == 'no') {
@@ -386,7 +427,11 @@ export class AnnexGenerationService {
     row: any,
     temp: string[],
   ) {
-    const cellText = row[item.cell.name].toLowerCase();
+    /**
+     * Converts the cell text from file to lowercase
+     * @type {string}
+     */
+    const cellText: string = row[item.cell.name].toLowerCase();
     if (cellText == 'alta') {
       worksheet.getCell(temp[2]).value = 'X';
     } else if (cellText == 'media') {
@@ -422,7 +467,11 @@ export class AnnexGenerationService {
    * @returns Promise<any[]> - Array of Google Drive IDs
    */
   private async uploadAndCleanup(filesData: GeneratedFileData): Promise<any[]> {
-    const filesID = [];
+    /**
+     * Array of Google Drive IDs and names of the generated files
+     * @type {any[]} - Array of {id: string, name: string}
+     */
+    const filesID: any[] = [];
 
     for (const filePath of filesData.getData()) {
       const id = await this.driveService.uploadExcelFile(
@@ -445,12 +494,34 @@ export class AnnexGenerationService {
   private async mergeByClient(
     filesData: GeneratedFileData,
   ): Promise<GeneratedFileData> {
-    const mergedData = new GeneratedFileData();
-    const files = filesData.getData();
-    const clients = this.extractClients(files);
+    /**
+     * Object that contains the data of the merged files by Client
+     * @type {GeneratedFileData}
+     */
+    const mergedData: GeneratedFileData = new GeneratedFileData();
+    /**
+     * Array of generated files data
+     * @type {any[]}
+     */
+    const files: any[] = filesData.getData();
+    /**
+     * Array of clients
+     * @type {string[]}
+     */
+    const clients: string[] = this.extractClients(files);
     for (const client of clients) {
-      const clientFiles = files.filter((file) => file.client == client);
-      const mergedFile = await this.mergeFiles(clientFiles);
+      /**
+       * Gets the files of a client
+       * @type {any[]}
+       */
+      const clientFiles: string[] = files.filter(
+        (file) => file.client == client,
+      );
+      /**
+       * Path of the merged file
+       * @type {string}
+       */
+      const mergedFile: string = await this.mergeFiles(clientFiles);
       mergedData.addData({ name: client, path: mergedFile, client: client });
     }
     return mergedData;
@@ -472,26 +543,51 @@ export class AnnexGenerationService {
    * @returns
    */
   private async mergeFiles(files: any[]): Promise<string> {
-    //const sheet = workbook.addWorksheet('My Sheet');
     if (!files[0].client) {
       return;
     }
-    const baseFilePath = `${__dirname}/${files[0].client}.xlsx`;
-    const newWorkbook = new ExcelJS.Workbook();
-    /*  const sheet = newWorkbook.addWorksheet('aux');
-    sheet.state = 'hidden'; */
+    /**
+     * Base file path to merge the files (the first file of the array)
+     * @type {string}
+     */
+    const baseFilePath: string = `${__dirname}/${files[0].client}.xlsx`;
+    /**
+     * New Excel workbook where the files will be merged
+     * @type {ExcelJS.Workbook}
+     */
+    const newWorkbook: ExcelJS.Workbook = new ExcelJS.Workbook();
     await newWorkbook.xlsx.writeFile(baseFilePath);
-    const workbookBase = await newWorkbook.xlsx.readFile(baseFilePath);
+    /**
+     * Base Excel workbook to merge the files (the first file of the array)
+     * @type {ExcelJS.Workbook}
+     */
+    const workbookBase: ExcelJS.Workbook = await newWorkbook.xlsx.readFile(
+      baseFilePath,
+    );
 
     for (const file of files) {
-      const name = this.extractInitials(file.name);
-      let source = new ExcelJS.Workbook();
+      /**
+       * Initials of the client name
+       * @type {string}
+       */
+      const name: string = this.extractInitials(file.name);
+      /**
+       * Generated excel workbook to merge with the base file
+       * @type {ExcelJS.Workbook}
+       */
+      let source: ExcelJS.Workbook = new ExcelJS.Workbook();
       source = await source.xlsx.readFile(`${__dirname}/${file.name}`);
       source.eachSheet((sheet, index) => {
         if (sheet.state == 'hidden') {
           return;
         }
-        const newSheet = workbookBase.addWorksheet(name + '-' + sheet.name);
+        /**
+         * New sheet to be added to the base file cloned from the generated file
+         * @type {ExcelJS.Worksheet}
+         */
+        const newSheet: ExcelJS.Worksheet = workbookBase.addWorksheet(
+          name + '-' + sheet.name,
+        );
         newSheet.model = Object.assign(sheet.model, {
           mergeCells: sheet.model.merges,
         });
@@ -502,6 +598,11 @@ export class AnnexGenerationService {
     return baseFilePath;
   }
 
+  /**
+   * Extracts the initials of the client name
+   * @param name - Name of the client
+   * @returns  string - Initials of the client name
+   */
   private extractInitials(name: string): string {
     const splitName = name.split(' ');
     const initials = splitName.map((name) => name[0]);
