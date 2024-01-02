@@ -24,4 +24,11 @@ export class AnnexService {
       relations: ['annexCell', 'annexCell.cell'],
     });
   }
+
+  async findByName(name:string){
+    return await this.annexRepository.findOne({
+      where: { name: name },
+      relations: ['annexCell', 'annexCell.cell'],
+    });
+  }
 }

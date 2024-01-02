@@ -47,15 +47,7 @@ export class AnnexGenerationService {
     @Inject(AnnexService) private readonly annexService: AnnexService,
     @Inject(DriveService) private readonly driveService: DriveService,
     @Inject(HistoricService) private readonly historicService: HistoricService,
-  ) {
-    if (!fs.existsSync(__dirname + '/new.xlsx')) {
-      this.driveService.downloadFile(
-        process.env.PLD_EXCEL_TEMPLATE_ID,
-        __dirname + '/new.xlsx',
-      );
-      Logger.debug('PLD Annex template downloaded');
-    }
-  }
+  ) {}
 
   /**
    * Loads an Excel file and returns its data
@@ -102,6 +94,15 @@ export class AnnexGenerationService {
    * @returns  Promise<any[]> - Array of Google Drive IDs
    */
   async generateAnnex(filePath: string, annexData: any, user: User) {
+    if (!fs.existsSync(__dirname + '/new.xlsx')) {
+      await this.driveService.downloadFile(
+        process.env.PLD_EXCEL_TEMPLATE_ID,
+        __dirname + '/new.xlsx',
+      );
+      Logger.debug('PLD Annex template downloaded');
+    } else {
+      Logger.debug('PLD Annex template already exists');
+    }
     /**
      * Object that contains the data of the generated files {name: string, path: string, client: string}
      * @type {GeneratedFileData}
@@ -577,7 +578,7 @@ export class AnnexGenerationService {
        */
       let source: ExcelJS.Workbook = new ExcelJS.Workbook();
       source = await source.xlsx.readFile(`${__dirname}/${file.name}`);
-      source.eachSheet((sheet, index) => {
+      source.eachSheet(async (sheet, index) => {
         if (sheet.state == 'hidden') {
           return;
         }
@@ -592,6 +593,20 @@ export class AnnexGenerationService {
           mergeCells: sheet.model.merges,
         });
         newSheet.name = name + '-' + sheet.name;
+
+        sheet.eachRow({ includeEmpty: true }, function (row, rowNumber) {
+          row.eachCell({ includeEmpty: true }, function (cell, colNumber) {
+            const newCell = newSheet.getCell(
+              cell.address,
+            );
+            newCell.value = cell.value;
+            newCell.style = cell.style;
+            newCell.border = cell.border;
+            newCell.alignment = cell.alignment;
+            newCell.fill = cell.fill;
+            newCell.font = cell.font;
+          });
+        })
       });
     }
     await workbookBase.xlsx.writeFile(baseFilePath);
